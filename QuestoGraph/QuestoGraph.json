@@ -1,0 +1,15 @@
+﻿{
+  "Author": "DarkIrata",
+  "Name": "Quest'o'Graph",
+  "Punchline": "Explore the quests and their rewards. QuestMap successor.",
+  "Description": "ToDo",
+  "ApplicableVersion": "any",
+  "Tags": [
+    "quest",
+    "map",
+    "questmap",
+    "questograph",
+    "graph",
+    "msq"
+  ]
+}
