@@ -138,12 +138,12 @@ namespace QuestoGraph.Windows
 
                         //            if (questData.HasEmoteReward)
                         //            {
-                        //                ImGuiUtils.AddIcon(questData.Emote.Icon, questData.Emote.Name.ToString(), unusualIconSize);
+                        //                ImGuiUtils.AddIcon(questData.Emote.Icon, questData.Emote.Name.ExtractText(), unusualIconSize);
                         //            }
 
                         //            if (questData.HasActionReward)
                         //            {
-                        //                ImGuiUtils.AddIcon(questData.Action.Icon, questData.Action.Name.ToString(), unusualIconSize);
+                        //                ImGuiUtils.AddIcon(questData.Action.Icon, questData.Action.Name.ExtractText(), unusualIconSize);
                         //            }
 
                         //            if (questData.HasGeneralActionRewards)
@@ -156,7 +156,7 @@ namespace QuestoGraph.Windows
 
                         //            if (questData.HasBeastTribeUnlock)
                         //            {
-                        //                ImGuiUtils.AddIcon(questData.BeastTribe.Icon, questData.BeastTribe.Name.ToString());
+                        //                ImGuiUtils.AddIcon(questData.BeastTribe.Icon, questData.BeastTribe.Name.ExtractText());
                         //            }
                         //        }
                         //    }
@@ -168,8 +168,8 @@ namespace QuestoGraph.Windows
 
         private void DrawQuestMeta()
         {
-            ImGuiUtils.AddIcon((uint)this.selectedQuestData.Quest.JournalGenre.Value.Icon, 48, 48, setSameLine: true);
-            var journalText = this.selectedQuestData.Quest.JournalGenre.IsValid ? this.selectedQuestData.Quest.JournalGenre.Value.Name.ToString() : string.Empty;
+            ImGuiUtils.AddIcon((uint)this.selectedQuestData!.Quest.JournalGenre.Value.Icon, 48, 48, setSameLine: true);
+            var journalText = this.selectedQuestData.Quest.JournalGenre.IsValid ? this.selectedQuestData.Quest.JournalGenre.Value.Name.ExtractText() : string.Empty;
             var levelReqAndName = $"(Lvl: {this.selectedQuestData.Quest.ClassJobLevel[0]}) {this.selectedQuestData!.Name}";
             MapLinkPayload? issuerPayload = null;
             var location = "";

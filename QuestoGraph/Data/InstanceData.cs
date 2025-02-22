@@ -9,7 +9,7 @@ namespace QuestoGraph.Data
 
         public uint ContentRowId => this.ContentFinder.Content.RowId;
 
-        public string Name => this.ContentFinder.Name.ToString();
+        public string Name => this.ContentFinder.Name.ExtractText();
 
         public bool ContentFound => this.ContentFinder.RowId != 0;
 

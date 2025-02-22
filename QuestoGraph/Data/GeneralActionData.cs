@@ -10,7 +10,7 @@ namespace QuestoGraph.Data
 
         public int Icon => this.GeneralAction.Icon;
 
-        public string Name => this.GeneralAction.Name.ToString();
+        public string Name => this.GeneralAction.Name.ExtractText();
 
         public GeneralActionData(GeneralAction generalAction)
         {

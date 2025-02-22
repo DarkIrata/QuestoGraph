@@ -19,7 +19,7 @@ namespace QuestoGraph.Manager
             var result = new Dictionary<uint, QuestData>();
             foreach (var quest in Plugin.DataManager.GetExcelSheet<Quest>(Dalamud.Game.ClientLanguage.English))
             {
-                if (string.IsNullOrEmpty(quest.Name.ToString()))
+                if (string.IsNullOrEmpty(quest.Name.ExtractText()))
                 {
                     continue;
                 }

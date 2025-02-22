@@ -38,7 +38,7 @@ namespace QuestoGraph.Data
             }
 
             var item = quest.OtherReward.Value;
-            return new ItemData(item.RowId, item.Icon, item.Name.ToString(), 1, false, null);
+            return new ItemData(item.RowId, item.Icon, item.Name.ExtractText(), 1, false, null);
         }
 
         private IReadOnlyList<ItemData> ParseRewardItems(Quest quest)
@@ -58,7 +58,7 @@ namespace QuestoGraph.Data
                 var stain = quest.RewardStain[i];
 
                 //Plugin.Log.Info($"Reward: {amount}x {itemId} {(stain.RowId != 0 ? stain.Value.Name : string.Empty)}");
-                var itemData = new ItemData(itemId, item.Icon, item.Name.ToString(), amount, false, stain.ValueNullable);
+                var itemData = new ItemData(itemId, item.Icon, item.Name.ExtractText(), amount, false, stain.ValueNullable);
                 result.Add(itemData);
             }
 
@@ -80,7 +80,7 @@ namespace QuestoGraph.Data
                 var amount = quest.ItemCountCatalyst[i];
 
                 //Plugin.Log.Info($"Catalyst: {amount}x {name}");
-                var itemData = new ItemData(itemId, item.Value.Icon, item.Value.Name.ToString(), amount, false, null);
+                var itemData = new ItemData(itemId, item.Value.Icon, item.Value.Name.ExtractText(), amount, false, null);
                 result.Add(itemData);
             }
 
@@ -104,7 +104,7 @@ namespace QuestoGraph.Data
                 var stain = quest.OptionalItemStainReward[i];
 
                 //Plugin.Log.Info($"Optional: {amount}x {name} ({(isHQ ? "HQ" : "NQ")}) {(stain.RowId != 0 ? stain.Value.Name : string.Empty)}");
-                var itemData = new ItemData(itemId, item.Value.Icon, item.Value.Name.ToString(), amount, isHQ, stain.ValueNullable);
+                var itemData = new ItemData(itemId, item.Value.Icon, item.Value.Name.ExtractText(), amount, isHQ, stain.ValueNullable);
                 result.Add(itemData);
             }
 

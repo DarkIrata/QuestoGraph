@@ -6,7 +6,7 @@ namespace QuestoGraph.Data
     {
         public uint RowId => this.Quest.RowId;
 
-        public string Name => this.Quest.Name.ToString();
+        public string Name => this.Quest.Name.ExtractText();
 
         public Quest Quest { get; }
 
@@ -61,9 +61,9 @@ namespace QuestoGraph.Data
             }
 
             const string ClassJobScriptInstruct = "CLASSJOB";
-            if (quest.QuestParams.Any(param => param.ScriptInstruction.ToString().Contains(ClassJobScriptInstruct)))
+            if (quest.QuestParams.Any(param => param.ScriptInstruction.ExtractText().Contains(ClassJobScriptInstruct)))
             {
-                var classParam = quest.QuestParams.FirstOrDefault(param => param.ScriptInstruction.ToString().StartsWith(ClassJobScriptInstruct));
+                var classParam = quest.QuestParams.FirstOrDefault(param => param.ScriptInstruction.ExtractText().StartsWith(ClassJobScriptInstruct));
                 try
                 {
                     return Plugin.DataManager.GetExcelSheet<ClassJob>()!.GetRow(classParam.ScriptArg);
@@ -97,7 +97,7 @@ namespace QuestoGraph.Data
                 const string InstanceScriptInstruct = "INSTANCEDUNGEON";
 
                 instanceUnlocks.AddRange(quest.QuestParams
-                    .Where(param => param.ScriptInstruction.ToString().Contains(InstanceScriptInstruct))
+                    .Where(param => param.ScriptInstruction.ExtractText().Contains(InstanceScriptInstruct))
                     .Select(qp => new InstanceData(qp)));
 
                 if (quest.InstanceContentUnlock.RowId != 0 && !instanceUnlocks.Any(iu => iu.ContentRowId == quest.InstanceContentUnlock.RowId))
