@@ -27,5 +27,12 @@ namespace QuestoGraph.Utils
             var xp = quest.ExpFactor * paramGrow.ScaledQuestXP * paramGrow.QuestExpModifier / 100;
             return xp < 0 ? 0 : xp;
         }
+
+        // Couldnt find it in the files, so i "map" it myself
+        internal static uint GetJobIconId(ClassJob job)
+        {
+            const uint baseId = 62226;
+            return job.RowId - 1 + baseId;
+        }
     }
 }
