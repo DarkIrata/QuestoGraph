@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.TextureWraps;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using ImGuiNET;
 using QuestoGraph.Data;
@@ -80,25 +81,32 @@ namespace QuestoGraph.Utils
             }
         }
 
-        internal static void AddQuestImage(QuestData questData, uint maxAllowedWidth = 525, bool center = true)
-            => AddQuestImage(questData.Quest.Icon, maxAllowedWidth, center);
+        internal static void AddQuestImage(QuestData questData, uint maxAllowedWidth = 524)
+            => AddQuestImage(questData.Quest.Icon, maxAllowedWidth);
 
-        internal static void AddSpecialQuestImage(QuestData questData, uint maxAllowedWidth = 525, bool center = true)
-            => AddQuestImage(questData.Quest.IconSpecial, maxAllowedWidth, center);
+        internal static void AddSpecialQuestImage(QuestData questData, uint maxAllowedWidth = 524)
+            => AddQuestImage(questData.Quest.IconSpecial, maxAllowedWidth);
 
-        internal static void AddQuestImage(uint icon, uint maxAllowedWidth = 525, bool center = true)
+        internal static void AddQuestImage(uint icon, uint maxAllowedWidth = 524)
         {
             var image = GetIcon(icon);
+            var padding = 7f;
+            var contentRectX = ImGui.GetContentRegionAvail().X - (2 * padding);
+            var maxWidth = Math.Clamp(contentRectX, padding, maxAllowedWidth);
             if (image != null)
             {
-                var contentRect = ImGui.GetContentRegionAvail();
-                var maxWidth = Math.Clamp(contentRect.X, 100, maxAllowedWidth);
-                var sizeVector = new Vector2(maxWidth, (maxWidth * image.Height) / image.Width);
-                if (center)
-                {
-                    ImGui.SetCursorPosX((ImGui.GetContentRegionAvail().X - sizeVector.X) * 0.5f);
-                }
-                ImGui.Image(image.ImGuiHandle, sizeVector);
+                var imageSize = new Vector2(maxWidth + (padding * 2), (maxWidth * image.Height) / image.Width);
+                ImGui.SetCursorPosX(0 + padding);
+                ImGui.Image(image.ImGuiHandle, imageSize);
+            }
+            else
+            {
+                var imageSize = new Vector2(maxWidth, (maxWidth * 360) / 1128); // Default Quest Image size
+                ImGuiHelpers.ScaledDummy(imageSize);
+                ImGui.SameLine();
+                const string text = "== no image ==";
+                ImGui.SetCursorPos((imageSize - ImGui.CalcTextSize(text)) * 0.5f);
+                ImGui.Text(text);
             }
         }
 
