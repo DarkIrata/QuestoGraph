@@ -9,6 +9,52 @@ namespace QuestoGraph.Utils
 {
     internal static class ImGuiUtils
     {
+        internal class FreeCursorPos : IDisposable
+        {
+            internal enum CursorReset
+            {
+                None,
+                All,
+                X,
+                Y,
+            }
+
+            public Vector2 LastPos { get; }
+
+            public CursorReset Reset { get; }
+
+            public FreeCursorPos(CursorReset reset = CursorReset.All)
+            {
+                this.LastPos = ImGui.GetCursorPos();
+                this.Reset = reset;
+            }
+
+            public void SetX(float x)
+                => ImGui.SetCursorPosX(x);
+
+            public void SetY(float y)
+                => ImGui.SetCursorPosY(y);
+
+            public void SetPos(float x, float y)
+                => ImGui.SetCursorPos(new Vector2(x, y));
+
+            public void Dispose()
+            {
+                switch (this.Reset)
+                {
+                    case CursorReset.All:
+                        ImGui.SetCursorPos(this.LastPos);
+                        break;
+                    case CursorReset.X:
+                        ImGui.SetCursorPosX(this.LastPos.X);
+                        break;
+                    case CursorReset.Y:
+                        ImGui.SetCursorPosY(this.LastPos.Y);
+                        break;
+                }
+            }
+        }
+
         internal static IDalamudTextureWrap? GetIcon(uint id)
             => id > 0 ? Plugin.TextureProvider.GetFromGameIcon(new GameIconLookup(id)).GetWrapOrDefault() : null;
 
