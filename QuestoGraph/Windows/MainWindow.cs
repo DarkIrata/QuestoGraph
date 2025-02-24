@@ -27,7 +27,7 @@ namespace QuestoGraph.Windows
 
             this.SizeConstraints = new WindowSizeConstraints
             {
-                MinimumSize = new Vector2(375, 100),
+                MinimumSize = new Vector2(550, 400),
                 MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
             };
         }
@@ -38,6 +38,19 @@ namespace QuestoGraph.Windows
 
         public override void Draw()
         {
+            using (var fp = new ImGuiUtils.FreeCursorPos())  // Praise Pingu - NOOT NOOT
+            {
+                var pinguIcon = ImGuiUtils.GetIcon(234564);
+                if (pinguIcon != null)
+                {
+                    const ushort size = 64;
+                    const ushort padding = 10;
+                    var regAvail = ImGui.GetWindowSize();
+                    fp.SetPos(regAvail.X - size - padding, regAvail.Y - size - padding);
+                    ImGui.Image(pinguIcon.ImGuiHandle, new Vector2(size, size), Vector2.Zero, Vector2.One, new Vector4(1f, 1f, 1f, 0.25f));
+                }
+            }
+
             using (var container = ImRaii.Child("QuestsContainer", new Vector2(225, ImGui.GetContentRegionAvail().Y), true))
             {
                 if (container.Success)
@@ -49,15 +62,13 @@ namespace QuestoGraph.Windows
                     {
                         if (child.Success)
                         {
-                            foreach (var questData in this.questsManager.QuestData.Values) // FILTER HERE
+                            foreach (var questData in this.questsManager.QuestData.Values) // DEBUG FILTER HERE
                             {
                                 var isSelected = this.selectedQuestData == questData;
-                                if (questData.Name.Contains(this.filter, StringComparison.CurrentCultureIgnoreCase))
+                                if (questData.Name.Contains(this.filter, StringComparison.CurrentCultureIgnoreCase)
+                                    && ImGui.Selectable(questData.Name, isSelected, ImGuiSelectableFlags.AllowDoubleClick))
                                 {
-                                    if (ImGui.Selectable(questData.Name, isSelected, ImGuiSelectableFlags.AllowDoubleClick))
-                                    {
-                                        this.selectedQuestData = questData;
-                                    }
+                                    this.selectedQuestData = questData;
                                 }
 
                                 if (isSelected)
@@ -80,18 +91,6 @@ namespace QuestoGraph.Windows
             {
                 if (container.Success)
                 {
-                    using (var fp = new ImGuiUtils.FreeCursorPos())  // Cause Pingu - NOOT NOOT
-                    {
-                        var pinguIcon = ImGuiUtils.GetIcon(234564);
-                        if (pinguIcon != null)
-                        {
-                            const ushort size = 64;
-                            var regAvail = ImGui.GetContentRegionAvail();
-                            fp.SetPos(regAvail.X - size, regAvail.Y - size);
-                            ImGui.Image(pinguIcon.ImGuiHandle, new Vector2(size, size), Vector2.Zero, Vector2.One, new Vector4(1f, 1f, 1f, 0.25f));
-                        }
-                    }
-
                     if (this.selectedQuestData == null)
                     {
                         const string text = "♪ No quest selected ♫";
@@ -112,32 +111,58 @@ namespace QuestoGraph.Windows
                     ImGui.Separator();
 
                     this.ShowPreviousQuests(this.selectedQuestData);
+                    this.ShowFollowingQuests(this.selectedQuestData);
                 }
             }
         }
 
         private void ShowPreviousQuests(QuestData questData)
         {
-            if (questData.Quest.PreviousQuest.Count > 0)
+            if (questData.PreviousQuestsId.Count > 0)
             {
                 ImGui.TextUnformatted("Previous Quests:");
-                using (var child = ImRaii.Child("##PrevQuests", Vector2.Zero, false, ImGuiWindowFlags.HorizontalScrollbar))
+                using (var child = ImRaii.Child("##PrevQuests", new System.Numerics.Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetContentRegionAvail().Y * 0.45f), false, ImGuiWindowFlags.HorizontalScrollbar))
                 {
                     if (child.Success)
                     {
-                        foreach (var prevQuest in questData.Quest.PreviousQuest)
+                        using (var indent = new ImRaii.Indent())
                         {
-                            if (prevQuest.RowId > 0)
-                            {
-                                var prevQuestData = this.questsManager.QuestData[prevQuest.RowId];
-                                if (ImGui.Selectable(prevQuestData.Name))
-                                {
-                                    this.selectedQuestData = prevQuestData;
-                                    this.filter = string.Empty;
-                                }
-                            }
+                            indent.Push();
+                            this.ListLinkedQuests(questData.NextQuestIds);
                         }
                     }
+                }
+            }
+        }
+
+        private void ShowFollowingQuests(QuestData questData)
+        {
+            if (questData.NextQuestIds.Count > 0)
+            {
+                ImGui.TextUnformatted("Next Quests:");
+                using (var child = ImRaii.Child("##NextQuests", new System.Numerics.Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetContentRegionAvail().Y), false, ImGuiWindowFlags.HorizontalScrollbar))
+                {
+                    if (child.Success)
+                    {
+                        using (var indent = new ImRaii.Indent())
+                        {
+                            indent.Push();
+                            this.ListLinkedQuests(questData.NextQuestIds);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void ListLinkedQuests(IReadOnlyList<uint> questIds)
+        {
+            foreach (var questId in questIds)
+            {
+                var quest = this.questsManager.QuestData[questId];
+                if (ImGui.Selectable($"{quest.Name}"))
+                {
+                    this.selectedQuestData = quest;
+                    this.filter = string.Empty;
                 }
             }
         }

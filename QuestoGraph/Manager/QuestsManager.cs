@@ -1,4 +1,5 @@
-﻿using Lumina.Excel.Sheets;
+﻿using System.Diagnostics;
+using Lumina.Excel.Sheets;
 using QuestoGraph.Data;
 
 namespace QuestoGraph.Manager
@@ -15,11 +16,15 @@ namespace QuestoGraph.Manager
 
         private void Initialize()
         {
-            Plugin.Log.Info($"Initializing..");
+            var sw = new Stopwatch();
+            sw.Start();
+
+            Plugin.Log.Info($"Initializing Quests..");
             var result = new Dictionary<uint, QuestData>();
             foreach (var quest in Plugin.DataManager.GetExcelSheet<Quest>(Dalamud.Game.ClientLanguage.English))
             {
-                if (string.IsNullOrEmpty(quest.Name.ExtractText()))
+                if (string.IsNullOrEmpty(quest.Name.ExtractText()) ||
+                    result.ContainsKey(quest.RowId))
                 {
                     continue;
                 }
@@ -30,9 +35,18 @@ namespace QuestoGraph.Manager
                 //var (_, nodes) = Node<Quest>.BuildTree(allQuests);
                 //this.AllNodes = nodes;
             }
+
+            Plugin.Log.Info($"Building NextQuest tree..");
+            foreach (var quest in result)
+            {
+                var nextQuests = result.Values.Where(q => q.PreviousQuestsId.Any(pq => pq == quest.Key)).Select(q => q.RowId);
+                quest.Value.AppendNextQuests(nextQuests);
+            }
+
             this.QuestData = result;
 
-            Plugin.Log.Info($"{this.QuestData.Count} Quests loaded");
+            sw.Stop();
+            Plugin.Log.Info($"{this.QuestData.Count} Quests loaded - {sw.Elapsed}");
         }
 
         private void Debug()

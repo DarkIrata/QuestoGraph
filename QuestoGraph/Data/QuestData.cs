@@ -38,9 +38,15 @@ namespace QuestoGraph.Data
 
         public ClassJob JobUnlock { get; }
 
+        public IReadOnlyList<uint> PreviousQuestsId { get; private set; } = [];
+
+        public IReadOnlyList<uint> NextQuestIds { get; private set; } = [];
+
         public QuestData(Quest quest)
         {
             this.Quest = quest;
+
+            this.SetPreviousQuests();
 
             this.ItemRewards = new ItemRewardsData(quest);
 
@@ -51,6 +57,16 @@ namespace QuestoGraph.Data
 
             this.InstanceUnlocks = this.ParseInstanceUnlocks(quest);
             this.JobUnlock = this.ParseJobUnlock(quest);
+        }
+
+        private void SetPreviousQuests()
+        {
+            if (this.Quest.PreviousQuest.Count > 0)
+            {
+                var prevQuests = new List<uint>();
+                prevQuests.AddRange(this.Quest.PreviousQuest.Where(pq => pq.IsValid && pq.RowId != 0).Select(pq => pq.RowId));
+                this.PreviousQuestsId = prevQuests;
+            }
         }
 
         private ClassJob ParseJobUnlock(Quest quest)
@@ -107,6 +123,13 @@ namespace QuestoGraph.Data
             }
 
             return instanceUnlocks;
+        }
+
+        internal void AppendNextQuests(IEnumerable<uint> nextQuests)
+        {
+            var temp = this.NextQuestIds.ToList();
+            temp.AddRange(nextQuests);
+            this.NextQuestIds = temp;
         }
     }
 }
