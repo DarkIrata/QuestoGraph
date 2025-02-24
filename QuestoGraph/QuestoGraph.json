@@ -2,7 +2,8 @@
   "Author": "DarkIrata",
   "Name": "Quest'o'Graph",
   "Punchline": "Explore the quests and their rewards. QuestMap successor.",
-  "Description": "ToDo",
+  "RepoUrl": "https://github.com/DarkIrata/QuestoGraph",
+  "Description": "Quickly look through all the Quests of FFxiv and which rewards await you. This is a QuestMap successor.",
   "ApplicableVersion": "any",
   "Tags": [
     "quest",
