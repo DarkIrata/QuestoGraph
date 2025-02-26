@@ -3,6 +3,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Common.Math;
 using ImGuiNET;
 using QuestoGraph.Data;
@@ -65,10 +66,18 @@ namespace QuestoGraph.Windows
                             foreach (var questData in this.questsManager.QuestData.Values) // DEBUG FILTER HERE
                             {
                                 var isSelected = this.selectedQuestData == questData;
-                                if (questData.Name.Contains(this.filter, StringComparison.CurrentCultureIgnoreCase)
-                                    && ImGui.Selectable(questData.Name, isSelected, ImGuiSelectableFlags.AllowDoubleClick))
+
+                                if (questData.Name.Contains(this.filter, StringComparison.CurrentCultureIgnoreCase))
                                 {
-                                    this.selectedQuestData = questData;
+                                    using (var color = new ImRaii.Color())
+                                    {
+                                        if (QuestManager.IsQuestComplete(questData.RowId))
+                                            color.Push(ImGuiCol.Text, 0xee76c922u);
+                                        if (ImGui.Selectable($"{questData.Name}##{questData.RowId}", isSelected, ImGuiSelectableFlags.AllowDoubleClick))
+                                        {
+                                            this.selectedQuestData = questData;
+                                        }
+                                    }
                                 }
 
                                 if (isSelected)
@@ -76,6 +85,20 @@ namespace QuestoGraph.Windows
                                     ImGui.SetItemDefaultFocus();
                                 }
                             }
+                        }
+                    }
+
+                    ImGui.Separator();
+                    using (var color = new ImRaii.Color())
+                    {
+                        // i stole the idea from marketboard plugin. Sorry D:
+                        //const uint baseColor = 0x003440ebu;
+                        const uint baseColor = 0x00323bbfu;
+                        color.Push(ImGuiCol.Button, 0xFF000000 | baseColor);
+                        color.Push(ImGuiCol.ButtonHovered, 0xAA000000 | baseColor);
+                        if (ImGui.Button(" Support on Ko-Fi "))
+                        {
+                            Dalamud.Utility.Util.OpenLink("https://ko-fi.com/darkirata");
                         }
                     }
                 }
