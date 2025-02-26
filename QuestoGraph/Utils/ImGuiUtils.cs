@@ -3,6 +3,7 @@ using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using ImGuiNET;
 using QuestoGraph.Data;
 
@@ -82,12 +83,12 @@ namespace QuestoGraph.Utils
         }
 
         internal static void AddQuestImage(QuestData questData, uint maxAllowedWidth = 524)
-            => AddQuestImage(questData.Quest.Icon, maxAllowedWidth);
+            => AddQuestImage(questData.Quest.Icon, questData.RowId, maxAllowedWidth);
 
         internal static void AddSpecialQuestImage(QuestData questData, uint maxAllowedWidth = 524)
-            => AddQuestImage(questData.Quest.IconSpecial, maxAllowedWidth);
+            => AddQuestImage(questData.Quest.IconSpecial, questData.RowId, maxAllowedWidth);
 
-        internal static void AddQuestImage(uint icon, uint maxAllowedWidth = 524)
+        internal static void AddQuestImage(uint icon, uint questRowId, uint maxAllowedWidth = 524)
         {
             var image = GetIcon(icon);
             var padding = 7f;
@@ -107,6 +108,20 @@ namespace QuestoGraph.Utils
                 const string text = "== no image ==";
                 ImGui.SetCursorPos((imageSize - ImGui.CalcTextSize(text)) * 0.5f);
                 ImGui.Text(text);
+            }
+
+            if (QuestManager.IsQuestComplete(questRowId))
+            {
+                var doneIcon = GetIcon(60081);
+                if (doneIcon != null)
+                {
+                    const ushort doneIconSize = 32;
+                    var tempCursorPos = ImGui.GetCursorPos();
+                    ImGui.SetCursorPos(new Vector2(ImGui.GetContentRegionAvail().X - doneIconSize - 5f, tempCursorPos.Y - doneIconSize - 10f));
+                    ImGui.Image(doneIcon.ImGuiHandle, new Vector2(doneIconSize, doneIconSize));
+                    Tooltip("Quest completed");
+                    ImGui.SetCursorPos(tempCursorPos);
+                }
             }
         }
 
