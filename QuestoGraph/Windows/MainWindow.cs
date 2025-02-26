@@ -63,7 +63,7 @@ namespace QuestoGraph.Windows
                     {
                         if (child.Success)
                         {
-                            foreach (var questData in this.questsManager.QuestData.Values) // DEBUG FILTER HERE
+                            foreach (var questData in this.questsManager.QuestData.Values.Where(qd => qd.IsReachable)) // FILTER HERE
                             {
                                 var isSelected = this.selectedQuestData == questData;
 
@@ -182,7 +182,7 @@ namespace QuestoGraph.Windows
             foreach (var questId in questIds)
             {
                 var quest = this.questsManager.QuestData[questId];
-                if (ImGui.Selectable($"{quest.Name}"))
+                if (quest.IsReachable && ImGui.Selectable($"{quest.Name}"))
                 {
                     this.selectedQuestData = quest;
                     this.filter = string.Empty;
