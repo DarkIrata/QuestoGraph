@@ -29,7 +29,7 @@ namespace QuestoGraph.Windows
             this.SizeConstraints = new WindowSizeConstraints
             {
                 MinimumSize = new Vector2(550, 400),
-                MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
+                MaximumSize = new Vector2(1200, float.MaxValue),
             };
         }
 
@@ -65,11 +65,11 @@ namespace QuestoGraph.Windows
                     {
                         if (child.Success)
                         {
-                            foreach (var questData in this.questsManager.QuestData.Values.Where(qd => qd.IsReachable)) // FILTER HERE
+                            foreach (var questData in this.GetFilteredList())
                             {
                                 var isSelected = this.selectedQuestData == questData;
 
-                                if (questData.Name.Contains(this.filter, StringComparison.CurrentCultureIgnoreCase))
+                                //if (questData.Name.Contains(this.filter, StringComparison.CurrentCultureIgnoreCase))
                                 {
                                     using (var color = new ImRaii.Color())
                                     {
@@ -108,6 +108,27 @@ namespace QuestoGraph.Windows
 
             ImGui.SameLine();
             this.DrawSelectedQuestDetails();
+        }
+
+        private IEnumerable<QuestData> GetFilteredList()
+        {
+            bool DeepContains(QuestData data)
+            {
+                const StringComparison comparer = StringComparison.InvariantCultureIgnoreCase;
+                return (string.IsNullOrEmpty(this.filter) ||
+                    data.Name.Contains(this.filter, comparer) ||
+                    (data.HasJobUnlock && data.JobUnlock.Name.ExtractText().Contains(this.filter, comparer)) ||
+                    (data.HasActionReward && data.Action.Name.ExtractText().Contains(this.filter, comparer)) ||
+                    (data.HasEmoteReward && data.Emote.Name.ExtractText().Contains(this.filter, comparer)) ||
+                    (data.HasInstanceUnlocks && data.InstanceUnlocks.Any(iu => iu.ContentFound && iu.Name.Contains(this.filter, comparer))) ||
+                    (data.HasGeneralActionRewards && data.GeneralActions.Any(ga => ga.Name.Contains(this.filter, comparer))) ||
+                    (data.ItemRewards.RewardItems.Any(r => r.Name.Contains(this.filter, comparer)) ||
+                    data.ItemRewards.OptionalItems.Any(r => r.Name.Contains(this.filter, comparer)) ||
+                    data.ItemRewards.CatalystItems.Any(r => r.Name.Contains(this.filter, comparer)) ||
+                    (data.ItemRewards.HasOtherItemReward && data.ItemRewards.OtherItem!.Name.Contains(this.filter, comparer))));
+            }
+
+            return this.questsManager.QuestData.Values.Where(qd => qd.IsReachable && DeepContains(qd));
         }
 
         private void DrawSelectedQuestDetails()
