@@ -153,7 +153,7 @@ namespace QuestoGraph.Windows
                         using (var indent = new ImRaii.Indent())
                         {
                             indent.Push();
-                            this.ListLinkedQuests(questData.NextQuestIds);
+                            this.ListLinkedQuests(questData.PreviousQuestsId);
                         }
                     }
                 }
