@@ -56,10 +56,12 @@ namespace QuestoGraph.Windows
             {
                 if (container.Success)
                 {
+                    var availableSize = ImGui.GetContentRegionAvail();
+                    ImGui.SetNextItemWidth(availableSize.X);
                     ImGui.InputTextWithHint("##NameFilter", "Search containing..", ref this.filter, 255);
                     ImGui.Separator();
 
-                    using (var child = ImRaii.Child("##Quests", Vector2.Zero, false, ImGuiWindowFlags.HorizontalScrollbar))
+                    using (var child = ImRaii.Child("##Quests", new Vector2(availableSize.X, availableSize.Y - 62), false, ImGuiWindowFlags.HorizontalScrollbar))
                     {
                         if (child.Success)
                         {
