@@ -42,6 +42,11 @@ namespace QuestoGraph.Data
 
         public IReadOnlyList<uint> NextQuestIds { get; private set; } = [];
 
+        // Unkown12 == true => Unreachable? 
+        // It looks like a Quest Replaced / Discontinued flag. Every entry currently set by this, was not reachable
+        // from what i could see
+        public bool IsReachable => !this.Quest.Unknown12 || (!this.Quest.IssuerLocation.IsValid && this.Quest.IssuerLocation.RowId != 0);
+
         public QuestData(Quest quest)
         {
             this.Quest = quest;
