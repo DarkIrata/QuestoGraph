@@ -342,7 +342,7 @@ namespace QuestoGraph.Windows
 
         private void DrawQuestMeta(QuestData questData)
         {
-            ImGuiUtils.AddIcon((uint)questData.Quest.JournalGenre.Value.Icon, 48, 48, setSameLine: true);
+            ImGuiUtils.AddIcon(questData.Quest.EventIconType.Value.NpcIconAvailable + 1, 48, 48, setSameLine: true);
 
             var journalText = questData.Quest.JournalGenre.IsValid ? questData.Quest.JournalGenre.Value.Name.ExtractText() : string.Empty;
             var levelReqAndName = $"(Lvl: {questData.Quest.ClassJobLevel[0]}) {questData!.Name}";
