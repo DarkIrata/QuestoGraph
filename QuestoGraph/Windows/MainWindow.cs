@@ -3,7 +3,6 @@ using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Common.Math;
 using ImGuiNET;
 using QuestoGraph.Data;
@@ -58,7 +57,7 @@ namespace QuestoGraph.Windows
                 {
                     var availableSize = ImGui.GetContentRegionAvail();
                     ImGui.SetNextItemWidth(availableSize.X);
-                    ImGui.InputTextWithHint("##NameFilter", "Search containing..", ref this.filter, 255);
+                    ImGui.InputTextWithHint("##NameFilter", "Search..", ref this.filter, 255);
                     ImGui.Separator();
 
                     using (var child = ImRaii.Child("##Quests", new Vector2(availableSize.X, availableSize.Y - 62), false, ImGuiWindowFlags.HorizontalScrollbar))
@@ -68,18 +67,10 @@ namespace QuestoGraph.Windows
                             foreach (var questData in this.questsManager.GetFilteredList(this.filter))
                             {
                                 var isSelected = this.selectedQuestData == questData;
-
-                                //if (questData.Name.Contains(this.filter, StringComparison.CurrentCultureIgnoreCase))
+                                if (ImGuiUtils.SelectableQuest(questData, null, ref isSelected))
                                 {
-                                    using (var color = new ImRaii.Color())
-                                    {
-                                        if (QuestManager.IsQuestComplete(questData.RowId))
-                                            color.Push(ImGuiCol.Text, 0xee76c922u);
-                                        if (ImGui.Selectable($"{questData.Name}##{questData.RowId}", isSelected, ImGuiSelectableFlags.AllowDoubleClick))
-                                        {
-                                            this.selectedQuestData = questData;
-                                        }
-                                    }
+                                    this.selectedQuestData = questData;
+                                    isSelected = true;
                                 }
 
                                 if (isSelected)
@@ -153,7 +144,7 @@ namespace QuestoGraph.Windows
                         using (var indent = new ImRaii.Indent())
                         {
                             indent.Push();
-                            this.ListLinkedQuests(questData.PreviousQuestsId);
+                            this.ListLinkedQuests(questData.PreviousQuestsId, "-prev");
                         }
                     }
                 }
@@ -172,19 +163,20 @@ namespace QuestoGraph.Windows
                         using (var indent = new ImRaii.Indent())
                         {
                             indent.Push();
-                            this.ListLinkedQuests(questData.NextQuestIds);
+                            this.ListLinkedQuests(questData.NextQuestIds, "-next");
                         }
                     }
                 }
             }
         }
 
-        private void ListLinkedQuests(IReadOnlyList<uint> questIds)
+        private void ListLinkedQuests(IReadOnlyList<uint> questIds, string selectableSuffix)
         {
             foreach (var questId in questIds)
             {
                 var quest = this.questsManager.QuestData[questId];
-                if (quest.IsReachable && ImGui.Selectable($"{quest.Name}"))
+                var isSelected = false;
+                if (quest.IsReachable && ImGuiUtils.SelectableQuest(quest, selectableSuffix, ref isSelected))
                 {
                     this.selectedQuestData = quest;
                     this.filter = string.Empty;
