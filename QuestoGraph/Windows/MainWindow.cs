@@ -42,7 +42,7 @@ namespace QuestoGraph.Windows
         {
             ImGuiUtils.DrawPingu();
 
-            using (var container = ImRaii.Child("QuestsContainer", new Vector2(225, ImGui.GetContentRegionAvail().Y), true))
+            using (var container = ImRaii.Child("QuestsContainer", new Vector2(225, ImGui.GetContentRegionAvail().Y), true, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse))
             {
                 if (container.Success)
                 {
@@ -85,6 +85,19 @@ namespace QuestoGraph.Windows
                             Dalamud.Utility.Util.OpenLink("https://ko-fi.com/darkirata");
                         }
                     }
+
+                    ImGui.SameLine();
+                    using (ImRaii.PushFont(UiBuilder.IconFont))
+                    using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.Y))
+                    {
+                        const float buttonSize = 24f;
+                        freePos.SetX(availableSize.X - (buttonSize / 2) - 4f);
+                        if (ImGui.Button($"{FontAwesomeIcon.Cog.ToIconString()}##Settings", new Vector2(buttonSize, buttonSize)))
+                        {
+                            Plugin.Log.Info("Yeahi");
+                        }
+                    }
+                    ImGuiUtils.Tooltip("Open Settings");
                 }
             }
 
@@ -356,6 +369,7 @@ namespace QuestoGraph.Windows
                         GameUtils.ShowMapPos(issuerPayload);
                     }
                 }
+                ImGuiUtils.Tooltip("Mark on map");
             }
         }
     }
