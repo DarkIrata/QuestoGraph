@@ -7,6 +7,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using ImGuiNET;
 using QuestoGraph.Data;
 using QuestoGraph.Data.Settings;
+using QuestoGraph.Enums;
 
 namespace QuestoGraph.Utils
 {
@@ -14,14 +15,6 @@ namespace QuestoGraph.Utils
     {
         internal class FreeCursorPos : IDisposable
         {
-            internal enum CursorReset
-            {
-                None,
-                All,
-                X,
-                Y,
-            }
-
             public Vector2 LastPos { get; }
 
             public CursorReset Reset { get; }

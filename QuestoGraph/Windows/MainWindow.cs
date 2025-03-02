@@ -7,6 +7,7 @@ using FFXIVClientStructs.FFXIV.Common.Math;
 using ImGuiNET;
 using QuestoGraph.Data;
 using QuestoGraph.Data.Settings;
+using QuestoGraph.Enums;
 using QuestoGraph.Manager;
 using QuestoGraph.Utils;
 
@@ -226,7 +227,7 @@ namespace QuestoGraph.Windows
             {
                 ImGui.SameLine();
                 var rewardsPos = ImGui.GetCursorPos();
-                using (var freePos = new ImGuiUtils.FreeCursorPos(ImGuiUtils.FreeCursorPos.CursorReset.Y))
+                using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.Y))
                 {
                     const short iconModifier = 5;
                     var targetIconSize = iconSize + iconModifier;
@@ -257,7 +258,7 @@ namespace QuestoGraph.Windows
             {
                 ImGui.SameLine();
                 var rewardsPos = ImGui.GetCursorPos();
-                using (var freePos = new ImGuiUtils.FreeCursorPos(ImGuiUtils.FreeCursorPos.CursorReset.Y))
+                using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.Y))
                 {
                     const short iconModifier = 5;
                     var targetIconSize = iconSize + iconModifier;
@@ -279,7 +280,7 @@ namespace QuestoGraph.Windows
             {
                 ImGui.SameLine();
                 var rewardsPos = ImGui.GetCursorPos();
-                using (var freePos = new ImGuiUtils.FreeCursorPos(ImGuiUtils.FreeCursorPos.CursorReset.Y))
+                using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.Y))
                 {
                     const short jobIconModifier = 11;
                     var jobIconSize = iconSize + jobIconModifier;
@@ -356,7 +357,7 @@ namespace QuestoGraph.Windows
             if (issuerPayload != null)
             {
                 using (ImRaii.PushFont(UiBuilder.IconFont))
-                using (var freePos = new ImGuiUtils.FreeCursorPos(ImGuiUtils.FreeCursorPos.CursorReset.Y))
+                using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.Y))
                 {
                     const float buttonSize = 24f;
                     freePos.SetX(ImGui.GetContentRegionAvail().X - buttonSize);
