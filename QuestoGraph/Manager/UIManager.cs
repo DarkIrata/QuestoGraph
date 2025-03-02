@@ -18,8 +18,8 @@ namespace QuestoGraph.Manager
             this.config = config;
             this.questsManager = questsManager;
 
-            this.mainWindow = new MainWindow(this.config, this.questsManager);
             this.settingsWindow = new SettingsWindow(this.config);
+            this.mainWindow = new MainWindow(this.config, this.questsManager, this.WindowSystem);
             this.WindowSystem.AddWindow(this.mainWindow);
             this.WindowSystem.AddWindow(this.settingsWindow);
 

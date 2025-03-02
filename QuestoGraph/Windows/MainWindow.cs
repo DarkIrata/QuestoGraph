@@ -17,15 +17,17 @@ namespace QuestoGraph.Windows
     {
         private readonly Config config;
         private readonly QuestsManager questsManager;
+        private readonly WindowSystem windowSystem;
 
         private string filter = string.Empty;
         private QuestData? selectedQuestData = null;
 
-        public MainWindow(Config config, QuestsManager questsManager)
+        public MainWindow(Config config, QuestsManager questsManager, WindowSystem windowSystem)
             : base($"{Plugin.Name} - Overview##Main View", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
         {
             this.config = config;
             this.questsManager = questsManager;
+            this.windowSystem = windowSystem;
 
             this.SizeConstraints = new WindowSizeConstraints
             {
@@ -94,7 +96,8 @@ namespace QuestoGraph.Windows
                         freePos.SetX(availableSize.X - (buttonSize / 2) - 4f);
                         if (ImGui.Button($"{FontAwesomeIcon.Cog.ToIconString()}##Settings", new Vector2(buttonSize, buttonSize)))
                         {
-                            Plugin.Log.Info("Yeahi");
+                            var settingsWindow = this.windowSystem.Windows.FirstOrDefault(w => w is SettingsWindow);
+                            settingsWindow?.Toggle();
                         }
                     }
                     ImGuiUtils.Tooltip("Open Settings");
