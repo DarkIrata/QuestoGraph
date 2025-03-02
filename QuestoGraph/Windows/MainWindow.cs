@@ -375,5 +375,14 @@ namespace QuestoGraph.Windows
                 ImGuiUtils.Tooltip("Mark on map");
             }
         }
+
+        internal void Prefilter(string? args)
+        {
+            if (args != null)
+            {
+                this.filter = args;
+                this.selectedQuestData = this.questsManager.GetFilteredList(this.filter).FirstOrDefault();
+            }
+        }
     }
 }

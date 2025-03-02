@@ -49,7 +49,18 @@ namespace QuestoGraph.Manager
 
         private void DrawUI() => this.WindowSystem.Draw();
 
-        public void ToggleMain() => this.mainWindow.Toggle();
+        public void ToggleMain() => this.ToggleMain(null);
+
+        public void ToggleMain(string? args)
+        {
+            if (string.IsNullOrWhiteSpace(args))
+            {
+                args = null;
+            }
+
+            this.mainWindow.Prefilter(args);
+            this.mainWindow.Toggle();
+        }
 
         public void ToggleSettings() => this.settingsWindow.Toggle();
     }
