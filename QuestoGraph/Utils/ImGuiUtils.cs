@@ -166,5 +166,20 @@ namespace QuestoGraph.Utils
                 return false;
             }
         }
+        internal static void DrawPingu()
+        {
+            using (var fp = new ImGuiUtils.FreeCursorPos())  // Praise Pingu - NOOT NOOT
+            {
+                var pinguIcon = ImGuiUtils.GetIcon(234564);
+                if (pinguIcon != null)
+                {
+                    const ushort size = 64;
+                    const ushort padding = 10;
+                    var regAvail = ImGui.GetWindowSize();
+                    fp.SetPos(regAvail.X - size - padding, regAvail.Y - size - padding);
+                    ImGui.Image(pinguIcon.ImGuiHandle, new Vector2(size, size), Vector2.Zero, Vector2.One, new Vector4(1f, 1f, 1f, 0.25f));
+                }
+            }
+        }
     }
 }
