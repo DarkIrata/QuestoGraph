@@ -6,6 +6,7 @@ using Dalamud.Interface.Windowing;
 using FFXIVClientStructs.FFXIV.Common.Math;
 using ImGuiNET;
 using QuestoGraph.Data;
+using QuestoGraph.Data.Settings;
 using QuestoGraph.Manager;
 using QuestoGraph.Utils;
 

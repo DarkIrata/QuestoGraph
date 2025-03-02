@@ -6,6 +6,7 @@ using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using ImGuiNET;
 using QuestoGraph.Data;
+using QuestoGraph.Data.Settings;
 
 namespace QuestoGraph.Utils
 {

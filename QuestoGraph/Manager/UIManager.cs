@@ -1,5 +1,5 @@
 ﻿using Dalamud.Interface.Windowing;
-using QuestoGraph.Data;
+using QuestoGraph.Data.Settings;
 using QuestoGraph.Windows;
 
 namespace QuestoGraph.Manager

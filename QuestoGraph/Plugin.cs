@@ -2,7 +2,7 @@
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using QuestoGraph.Data;
+using QuestoGraph.Data.Settings;
 using QuestoGraph.Manager;
 
 namespace QuestoGraph

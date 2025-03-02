@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Lumina.Excel.Sheets;
 using QuestoGraph.Data;
+using QuestoGraph.Data.Settings;
 
 namespace QuestoGraph.Manager
 {
