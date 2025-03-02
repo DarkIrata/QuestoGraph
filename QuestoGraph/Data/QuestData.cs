@@ -1,4 +1,5 @@
 ﻿using Lumina.Excel.Sheets;
+using QuestoGraph.Enums;
 
 namespace QuestoGraph.Data
 {
@@ -9,6 +10,8 @@ namespace QuestoGraph.Data
         public string Name => this.Quest.Name.ExtractText();
 
         public Quest Quest { get; }
+
+        public QuestTypes QuestType { get; }
 
         public uint GilReward => this.Quest.GilReward;
 
@@ -42,7 +45,7 @@ namespace QuestoGraph.Data
 
         public IReadOnlyList<uint> NextQuestIds { get; private set; } = [];
 
-        // Unkown12 == true => Unreachable? 
+        // Unkown12 == true => Unreachable? Dupliacte??
         // It looks like a Quest Replaced / Discontinued flag. Every entry currently set by this, was not reachable
         // from what i could see
         public bool IsReachable => !this.Quest.Unknown12 || (!this.Quest.IssuerLocation.IsValid && this.Quest.IssuerLocation.RowId != 0);
@@ -50,6 +53,13 @@ namespace QuestoGraph.Data
         public QuestData(Quest quest)
         {
             this.Quest = quest;
+            this.QuestType = quest.EventIconType.RowId switch
+            {
+                3 => QuestTypes.MSQ,
+                8 => QuestTypes.Blue,
+                10 => QuestTypes.Blue,
+                _ => QuestTypes.Normal,
+            };
 
             this.SetPreviousQuests();
 
