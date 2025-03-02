@@ -42,7 +42,7 @@ namespace QuestoGraph
         {
             this.Config = Interface.GetPluginConfig() as Config ?? new Config();
 
-            this.questsManager = new QuestsManager();
+            this.questsManager = new QuestsManager(this.Config);
             this.uiManager = new UIManager(this.Config, this.questsManager);
 
             this.RegisterCommands();

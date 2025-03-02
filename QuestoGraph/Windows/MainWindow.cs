@@ -58,7 +58,7 @@ namespace QuestoGraph.Windows
                             foreach (var questData in this.questsManager.GetFilteredList(this.filter))
                             {
                                 var isSelected = this.selectedQuestData == questData;
-                                if (ImGuiUtils.SelectableQuest(questData, null, ref isSelected))
+                                if (ImGuiUtils.SelectableQuest(this.config.Colors, questData, null, ref isSelected))
                                 {
                                     this.selectedQuestData = questData;
                                     isSelected = true;
@@ -167,7 +167,7 @@ namespace QuestoGraph.Windows
             {
                 var quest = this.questsManager.QuestData[questId];
                 var isSelected = false;
-                if (quest.IsReachable && ImGuiUtils.SelectableQuest(quest, selectableSuffix, ref isSelected))
+                if (quest.IsReachable && ImGuiUtils.SelectableQuest(this.config.Colors, quest, selectableSuffix, ref isSelected))
                 {
                     this.selectedQuestData = quest;
                     this.filter = string.Empty;
@@ -218,7 +218,7 @@ namespace QuestoGraph.Windows
                 var rewardsPos = ImGui.GetCursorPos();
                 using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.Y))
                 {
-                    const short iconModifier = 5;
+                    const short iconModifier = 2;
                     var targetIconSize = iconSize + iconModifier;
                     var actions = questData.GeneralActions.Where(ga => ga.Icon > 0).ToArray();
                     var lastX = rewardsPos.X - (iconModifier / 2) + dummySize.X;

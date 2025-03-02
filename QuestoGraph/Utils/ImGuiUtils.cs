@@ -149,13 +149,17 @@ namespace QuestoGraph.Utils
             }
         }
 
-        internal static bool SelectableQuest(QuestData questData, string? nameSuffix, ref bool isSelected)
+        internal static bool SelectableQuest(ColorSettings colorSettings, QuestData questData, string? nameSuffix, ref bool isSelected)
         {
             using (var color = new ImRaii.Color())
             {
                 if (QuestManager.IsQuestComplete(questData.RowId))
                 {
-                    color.Push(ImGuiCol.Text, 0xee76c922u);
+                    color.Push(ImGuiCol.Text, colorSettings.SidebarCompletedColor);
+                }
+                else
+                {
+                    color.Push(ImGuiCol.Text, colorSettings.SidebarDefaultColor);
                 }
 
                 if (ImGui.Selectable($"{questData.Name}##{questData.RowId}{nameSuffix ?? string.Empty}", isSelected))
