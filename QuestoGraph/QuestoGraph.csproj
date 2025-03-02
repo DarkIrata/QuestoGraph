@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0-windows</TargetFramework>
-    <Version>0.8.5.0</Version>
+    <Version>0.8.5.1</Version>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>QuestoGraph</RootNamespace>
     <Nullable>enable</Nullable>

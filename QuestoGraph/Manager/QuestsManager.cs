@@ -69,25 +69,25 @@ namespace QuestoGraph.Manager
                 var nameContains = !hasFilter || data.Name.Contains(filter!, comparer);
 
                 var result = false;
-                if (this.config.Display.ShowMSQQuests)
+                if (!result && this.config.Display.ShowMSQQuests)
                 {
                     result = nameContains &&
                            data.QuestType == Enums.QuestTypes.MSQ;
                 }
 
-                if (this.config.Display.ShowNormalQuests)
+                if (!result && this.config.Display.ShowNormalQuests)
                 {
                     result = nameContains &&
                            data.QuestType == Enums.QuestTypes.Normal;
                 }
 
-                if (this.config.Display.ShowBlueQuests)
+                if (!result && this.config.Display.ShowBlueQuests)
                 {
                     result = nameContains &&
                            data.QuestType == Enums.QuestTypes.Blue;
                 }
 
-                if (this.config.Display.ShowEmoteQuests && data.HasEmoteReward)
+                if (!result && this.config.Display.ShowEmoteQuests && data.HasEmoteReward)
                 {
                     result = true;
                     if (this.config.Search.IncludeEmotes && hasFilter)
@@ -96,7 +96,7 @@ namespace QuestoGraph.Manager
                     }
                 }
 
-                if (this.config.Display.ShowInstanceUnlocks && data.InstanceUnlocks.Any(iu => iu.ContentFound))
+                if (!result && this.config.Display.ShowInstanceUnlocks && data.InstanceUnlocks.Any(iu => iu.ContentFound))
                 {
                     result = true;
                     if (this.config.Search.IncludeInstances && hasFilter)
@@ -105,7 +105,7 @@ namespace QuestoGraph.Manager
                     }
                 }
 
-                if (this.config.Display.ShowJobAndActionQuests && (data.HasJobUnlock || data.HasActionReward || data.HasGeneralActionRewards))
+                if (!result && this.config.Display.ShowJobAndActionQuests && (data.HasJobUnlock || data.HasActionReward || data.HasGeneralActionRewards))
                 {
                     result = true;
                     if (this.config.Search.IncludeActions && hasFilter)
@@ -115,7 +115,7 @@ namespace QuestoGraph.Manager
                     }
                 }
 
-                if (this.config.Display.ShowWithRewards && data.ItemRewards.HasAnyItemRewards)
+                if (!result && this.config.Display.ShowWithRewards && data.ItemRewards.HasAnyItemRewards)
                 {
                     result = true;
                     if (this.config.Search.IncludeItems && hasFilter)
