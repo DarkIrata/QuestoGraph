@@ -170,6 +170,17 @@ namespace QuestoGraph.Utils
                 return false;
             }
         }
+
+        internal static void SeperatorWithText(string text, float spacingTop = 3f, float spacingBottom = 1f)
+        {
+            ImGuiHelpers.ScaledDummy(spacingTop);
+            var oldPos = ImGui.GetCursorPos();
+            ImGui.TextUnformatted($"  {text}");
+            ImGui.SetCursorPos(new Vector2(oldPos.X, oldPos.Y + 15f));
+            ImGui.Separator();
+            ImGuiHelpers.ScaledDummy(spacingBottom);
+        }
+
         internal static void DrawPingu()
         {
             using (var fp = new ImGuiUtils.FreeCursorPos())  // Praise Pingu - NOOT NOOT

@@ -11,6 +11,7 @@ namespace QuestoGraph.Manager
 
         private readonly WindowSystem WindowSystem = new(Plugin.Name);
         private readonly MainWindow mainWindow;
+        private readonly SettingsWindow settingsWindow;
 
         public UIManager(Config config, QuestsManager questsManager)
         {
@@ -18,27 +19,38 @@ namespace QuestoGraph.Manager
             this.questsManager = questsManager;
 
             this.mainWindow = new MainWindow(this.config, this.questsManager);
+            this.settingsWindow = new SettingsWindow(this.config);
             this.WindowSystem.AddWindow(this.mainWindow);
+            this.WindowSystem.AddWindow(this.settingsWindow);
 
             Plugin.Interface.UiBuilder.Draw += this.DrawUI;
-            Plugin.Interface.UiBuilder.OpenMainUi += this.Toggle;
+            Plugin.Interface.UiBuilder.OpenMainUi += this.ToggleMain;
+            Plugin.Interface.UiBuilder.OpenConfigUi += this.ToggleSettings;
         }
 
         public void Dispose()
         {
-            Plugin.Interface.UiBuilder.OpenMainUi -= this.Toggle;
+            Plugin.Interface.UiBuilder.OpenMainUi -= this.ToggleMain;
+            Plugin.Interface.UiBuilder.OpenConfigUi -= this.ToggleSettings;
 
-            if (this.mainWindow.IsOpen)
+            foreach (var window in this.WindowSystem.Windows)
             {
-                this.mainWindow.Toggle();
+                if (window.IsOpen)
+                {
+                    window.Toggle();
+                }
             }
+
             this.mainWindow.Dispose();
+            this.settingsWindow.Dispose();
 
             Plugin.Interface.UiBuilder.Draw -= this.DrawUI;
         }
 
         private void DrawUI() => this.WindowSystem.Draw();
 
-        public void Toggle() => this.mainWindow.Toggle();
+        public void ToggleMain() => this.mainWindow.Toggle();
+
+        public void ToggleSettings() => this.settingsWindow.Toggle();
     }
 }

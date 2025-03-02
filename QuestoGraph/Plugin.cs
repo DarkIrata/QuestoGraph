@@ -50,7 +50,7 @@ namespace QuestoGraph
 
         private void RegisterCommands()
         {
-            CommandManager.AddHandler(commandName, new CommandInfo((_, _) => this.uiManager.Toggle())
+            CommandManager.AddHandler(commandName, new CommandInfo((_, _) => this.uiManager.ToggleMain())
             {
                 HelpMessage = "Show Quests",
             });
