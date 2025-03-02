@@ -66,7 +66,8 @@ namespace QuestoGraph.Manager
                 // This is disgusting, and i should feel disgusted!
                 const StringComparison comparer = StringComparison.InvariantCultureIgnoreCase;
                 var hasFilter = !string.IsNullOrWhiteSpace(filter);
-                var nameContains = !hasFilter || data.Name.Contains(filter!, comparer);
+                filter = !hasFilter ? string.Empty : filter!;
+                var nameContains = data.Name.Contains(filter, comparer);
 
                 var result = false;
                 if (!result && this.config.Display.ShowMSQQuests)
@@ -89,41 +90,43 @@ namespace QuestoGraph.Manager
 
                 if (!result && this.config.Display.ShowEmoteQuests && data.HasEmoteReward)
                 {
-                    result = true;
+                    result = (hasFilter && nameContains) || !hasFilter;
                     if (this.config.Search.IncludeEmotes && hasFilter)
                     {
-                        result = data.Emote.Name.ExtractText().Contains(filter!, comparer);
+                        result = data.Emote.Name.ExtractText().Contains(filter!, comparer) || nameContains;
                     }
                 }
 
                 if (!result && this.config.Display.ShowInstanceUnlocks && data.InstanceUnlocks.Any(iu => iu.ContentFound))
                 {
-                    result = true;
+                    result = (hasFilter && nameContains) || !hasFilter;
                     if (this.config.Search.IncludeInstances && hasFilter)
                     {
-                        result = data.InstanceUnlocks.Any(iu => iu.ContentFound && iu.Name.Contains(filter!, comparer));
+                        result = data.InstanceUnlocks.Any(iu => iu.ContentFound && iu.Name.Contains(filter!, comparer)) || nameContains;
                     }
                 }
 
                 if (!result && this.config.Display.ShowJobAndActionQuests && (data.HasJobUnlock || data.HasActionReward || data.HasGeneralActionRewards))
                 {
-                    result = true;
+                    result = (hasFilter && nameContains) || !hasFilter;
                     if (this.config.Search.IncludeActions && hasFilter)
                     {
                         result = data.Action.Name.ExtractText().Contains(filter!, comparer) ||
-                                 data.GeneralActions.Any(ga => ga.Name.Contains(filter!, comparer));
+                                 data.GeneralActions.Any(ga => ga.Name.Contains(filter!, comparer)) ||
+                                 nameContains;
                     }
                 }
 
                 if (!result && this.config.Display.ShowWithRewards && data.ItemRewards.HasAnyItemRewards)
                 {
-                    result = true;
+                    result = (hasFilter && nameContains) || !hasFilter;
                     if (this.config.Search.IncludeItems && hasFilter)
                     {
                         result = data.ItemRewards.RewardItems.Any(r => r.Name.Contains(filter!, comparer)) ||
                                  data.ItemRewards.OptionalItems.Any(r => r.Name.Contains(filter!, comparer)) ||
                                  data.ItemRewards.CatalystItems.Any(r => r.Name.Contains(filter!, comparer)) ||
-                                 (data.ItemRewards.HasOtherItemReward && data.ItemRewards.OtherItem!.Name.Contains(filter!, comparer));
+                                 (data.ItemRewards.HasOtherItemReward && data.ItemRewards.OtherItem!.Name.Contains(filter!, comparer)) ||
+                                 nameContains;
                     }
                 }
 
@@ -132,7 +135,7 @@ namespace QuestoGraph.Manager
 
             Plugin.Log.Debug($"Refreshing Filtered List with filter '{filter ?? string.Empty}'");
             this.lastFilter = filter ?? string.Empty;
-            this.filteredQuestData = this.QuestData.Values.Where(qd => qd.IsReachable && DeepContains(qd));
+            this.filteredQuestData = this.QuestData.Values.Where(qd => qd.IsReachable && DeepContains(qd)).ToList();
             return this.filteredQuestData;
         }
     }
