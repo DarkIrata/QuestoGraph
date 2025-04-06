@@ -1,7 +1,7 @@
 {
   "version": 1,
   "dependencies": {
-    "net8.0-windows7.0": {
+    "net9.0-windows7.0": {
       "AutomaticGraphLayout": {
         "type": "Direct",
         "requested": "[1.1.12, )",
@@ -10,9 +10,9 @@
       },
       "DalamudPackager": {
         "type": "Direct",
-        "requested": "[11.0.0, )",
-        "resolved": "11.0.0",
-        "contentHash": "bjT7XUlhIJSmsE/O76b7weUX+evvGQctbQB8aKXt94o+oPWxHpCepxAGMs7Thow3AzCyqWs7cOpp9/2wcgRRQA=="
+        "requested": "[12.0.0, )",
+        "resolved": "12.0.0",
+        "contentHash": "J5TJLV3f16T/E2H2P17ClWjtfEBPpq3yxvqW46eN36JCm6wR+EaoaYkqG9Rm5sHqs3/nK/vKjWWyvEs/jhKoXw=="
       },
       "Lumina": {
         "type": "Direct",
@@ -25,18 +25,18 @@
       },
       "Lumina.Excel": {
         "type": "Direct",
-        "requested": "[7.1.3, )",
-        "resolved": "7.1.3",
-        "contentHash": "fEYaSEbRPknwpSyB4cSqXMUr9oRD7citBhOY3Ib5tZlKILvKPoCCNvorcn7CzaFvg5p7cQf/6+ec1DQPj0niFw==",
+        "requested": "[7.2.1, )",
+        "resolved": "7.2.1",
+        "contentHash": "ZLl/DeSeTeb16A35Ay1oBk+OsRF6vUE0LbWurpwKrC5r5l3t+XNOkNsoo4MWYNCen/USdECaD0jquggMC9x5jw==",
         "dependencies": {
-          "Lumina": "0.0.0-preview.0"
+          "Lumina": "5.6.1"
         }
       },
       "System.Threading.Channels": {
         "type": "Direct",
-        "requested": "[9.0.2, )",
-        "resolved": "9.0.2",
-        "contentHash": "pUmqkuBS9OxWHOlfNad09Oxc8gRbxgN9UQtsqHPst4jfcgZRxQetNcsT2oe+VnUpEFAtBy1FZcJZiOscrBmA7g=="
+        "requested": "[9.0.3, )",
+        "resolved": "9.0.3",
+        "contentHash": "Ao0iegVONKYVw0eWxJv0ArtMVfkFjgyyYKtUXru6xX5H95flSZWW3QCavD4PAgwpc0ETP38kGHaYbPzSE7sw2w=="
       },
       "Microsoft.Extensions.ObjectPool": {
         "type": "Transitive",
