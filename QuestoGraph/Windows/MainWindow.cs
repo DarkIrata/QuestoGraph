@@ -374,6 +374,19 @@ namespace QuestoGraph.Windows
                 }
                 ImGuiUtils.Tooltip("Mark on map");
             }
+
+            using (ImRaii.PushFont(UiBuilder.IconFont))
+            using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.Y))
+            {
+                const float buttonSize = 24f;
+                freePos.SetX(ImGui.GetContentRegionAvail().X - 4f - (buttonSize * 2));
+                freePos.SetY(freePos.LastPos.Y - ImGui.CalcTextSize(metaInfo).Y);
+                if (ImGui.Button($"{FontAwesomeIcon.Book.ToIconString()}##QuestsLog_" + questData.RowId, new Vector2(buttonSize, buttonSize)))
+                {
+                    GameUtils.ShowInQuestJournal(questData.RowId, questData.QuestType);
+                }
+            }
+            ImGuiUtils.Tooltip("Try open in quest journal");
         }
 
         internal void Prefilter(string? args)
