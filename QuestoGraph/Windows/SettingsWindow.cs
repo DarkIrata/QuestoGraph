@@ -86,11 +86,11 @@ namespace QuestoGraph.Windows
         {
             ImGuiHelpers.CenteredText("•°*•._ Quest'o'Graph _.•*°•");
             ImGuiHelpers.CenteredText($"v{this.assemblyVersion}");
-            ImGuiHelpers.CenteredText("A rewritten successor plugin to QuestMap");
+            ImGuiHelpers.CenteredText("A rewritten successor to QuestMap");
             ImGuiHelpers.CenteredText("-.,_,.='``'-.,_,.-'``'=.,_,.-");
             ImGuiHelpers.ScaledDummy(1f, 5f);
             ImGuiHelpers.CenteredText("Bugs or Improvement? Submit it!");
-            ImGuiHelpers.CenteredText("Please support me and my projects at Ko-Fi");
+            ImGuiHelpers.CenteredText("Support me and my projects at Ko-Fi");
             ImGuiHelpers.ScaledDummy(1f, 8f);
             ImGui.TextUnformatted("SPECIAL THANKS");
             ImGui.BulletText("anna - QuestMap Creator");
