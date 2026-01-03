@@ -15,6 +15,9 @@ namespace QuestoGraph.Windows
         {
             Filter,
             Colors,
+#if DEBUG
+            Graph,
+#endif
             About,
         }
 
@@ -74,6 +77,9 @@ namespace QuestoGraph.Windows
                     case Options.Colors:
                         this.DrawColorOptions();
                         break;
+                    case Options.Graph:
+                        this.DrawGraphOptions();
+                        break;
                     case Options.About:
                     default:
                         this.DrawAbout();
@@ -86,7 +92,7 @@ namespace QuestoGraph.Windows
         {
             ImGuiHelpers.CenteredText("•°*•._ Quest'o'Graph _.•*°•");
             ImGuiHelpers.CenteredText($"v{this.assemblyVersion}");
-            ImGuiHelpers.CenteredText("A rewritten successor to QuestMap");
+            ImGuiHelpers.CenteredText("A (WIP) rewritten successor to QuestMap");
             ImGuiHelpers.CenteredText("-.,_,.='``'-.,_,.-'``'=.,_,.-");
             ImGuiHelpers.ScaledDummy(1f, 5f);
             ImGuiHelpers.CenteredText("Bugs or Improvement? Submit it!");
@@ -130,6 +136,17 @@ namespace QuestoGraph.Windows
 
             this.config.Colors.SidebarDefaultColor = this.ColorEdit("Default Quest", "Default", this.config.Colors.SidebarDefaultColor, this.backupConfig.Colors.SidebarDefaultColor);
             this.config.Colors.SidebarCompletedColor = this.ColorEdit("Completed Quest", "DoneQuest", this.config.Colors.SidebarCompletedColor, this.backupConfig.Colors.SidebarCompletedColor);
+        }
+
+        private void DrawGraphOptions()
+        {
+            ImGuiUtils.SeperatorWithText("Display");
+            using (var indent = new ImRaii.Indent())
+            {
+                indent.Push(1);
+                this.config.Graph.CompressMSQ = this.Checkbox("Compress MSQ Quests", this.config.Graph.CompressMSQ);
+                this.config.Graph.ShowArrowheads = this.Checkbox("Show Arrowheads", this.config.Graph.ShowArrowheads);
+            }
         }
 
         private bool Checkbox(string label, bool state)

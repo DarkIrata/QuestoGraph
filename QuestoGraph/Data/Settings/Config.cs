@@ -12,5 +12,7 @@ namespace QuestoGraph.Data.Settings
         public SearchSettings Search { get; set; } = new SearchSettings();
 
         public ColorSettings Colors { get; set; } = new ColorSettings();
+
+        public GraphSettings Graph { get; set; } = new GraphSettings();
     }
 }

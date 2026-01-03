@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics;
+using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Windowing;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -30,9 +31,12 @@ namespace QuestoGraph.Windows
                 MaximumSize = new Vector2(1200, float.MaxValue),
             };
 
-            //this.SelectedQuest = this.questsManager.QuestData.FirstOrDefault(qd => qd.Value.Name.Contains("By Agents Unknown")).Value;
-            this.SelectedQuest = this.questsManager.QuestData.FirstOrDefault(qd => qd.Value.Name.Contains("Endwalker")).Value;
-            this.StartGraphRecalculation(this.SelectedQuest);
+            this.SelectedQuest = this.questsManager.QuestData.FirstOrDefault(qd => qd.Value.Name.Contains("By Agents Unknown")).Value;
+            if (this.redrawLayout)
+            {
+                this.StartGraphRecalculation(this.SelectedQuest);
+                this.redrawLayout = false;
+            }
         }
 
         public void Dispose()
@@ -52,12 +56,11 @@ namespace QuestoGraph.Windows
 
             if (ImGui.BeginChild("quest-map", new Vector2(-1, -1)))
             {
-                if (this.SelectedQuest.RowId == 0 && this.Graph == null)
+                if (this.SelectedQuest.RowId == 0 || this.Graph == null)
                 {
                     ImGui.TextUnformatted("Generating map...");
                 }
-
-                if (this.Graph != null)
+                else if (this.Graph != null)
                 {
                     this.DrawGraph(this.Graph);
                 }
@@ -68,35 +71,39 @@ namespace QuestoGraph.Windows
 
         private static class Colors
         {
-            internal static readonly uint Bg = ImGui.GetColorU32(new Vector4(0.13f, 0.13f, 0.13f, 1));
-            internal static readonly uint Bg2 = ImGui.GetColorU32(new Vector4(0.3f, 0.3f, 0.3f, 1));
-            internal static readonly uint Text = ImGui.GetColorU32(new Vector4(0.9f, 0.9f, 0.9f, 1));
-            internal static readonly uint Line = ImGui.GetColorU32(new Vector4(0.7f, 0.7f, 0.7f, 1));
-            internal static readonly uint Grid = ImGui.GetColorU32(new Vector4(0.1f, 0.1f, 0.1f, 1));
+            internal static readonly uint Background = ImGui.ColorConvertFloat4ToU32(new Vector4(0.13f, 0.13f, 0.13f, 1));
+            internal static readonly uint Border = ImGui.ColorConvertFloat4ToU32(new Vector4(0.3f, 0.3f, 0.3f, 1));
+            internal static readonly uint Bg2 = ImGui.ColorConvertFloat4ToU32(new Vector4(0.3f, 0.3f, 1f, 1));
+            internal static readonly uint Text = ImGui.ColorConvertFloat4ToU32(new Vector4(0.9f, 0.9f, 0.9f, 1));
+            internal static readonly uint Line = ImGui.ColorConvertFloat4ToU32(new Vector4(0.7f, 0.7f, 0.7f, 1));
+            internal static readonly uint Grid = ImGui.ColorConvertFloat4ToU32(new Vector4(0.1f, 0.1f, 0.1f, 1));
+            internal static readonly uint Test = ImGui.ColorConvertFloat4ToU32(new Vector4(1f, 0.1f, 0.1f, 1));
 
             internal static readonly Vector4 NormalQuest = new(0.54f, 0.45f, 0.36f, 1);
             internal static readonly Vector4 MsqQuest = new(0.29f, 0.35f, 0.44f, 1);
             internal static readonly Vector4 BlueQuest = new(0.024F, 0.016f, 0.72f, 1);
         }
+
         private Vector2 GetTopLeft(GeometryObject item)
         {
             // imgui measures from top left as 0,0
-            return item.BoundingBox.RightTop.ToVector2() + this._offset;
+            return item.BoundingBox.RightTop.ToVector2() + this.centerOffset;
         }
 
         private Vector2 GetBottomRight(GeometryObject item)
         {
-            return item.BoundingBox.LeftBottom.ToVector2() + this._offset;
+            return item.BoundingBox.LeftBottom.ToVector2() + this.centerOffset;
         }
 
-        private bool _relayout;
-        private Vector2 _offset = Vector2.Zero;
+        private bool redrawLayout = true;
+        private Vector2 centerOffset = Vector2.Zero;
         private static readonly Vector2 TextOffset = new(5, 2);
         private const int GridSmall = 10;
         private const int GridLarge = 50;
-        private bool _viewDrag;
-        private Vector2 _lastDragPos;
+        private bool viewDrag;
+        private Vector2 lastDragPos;
         private QuestData SelectedQuest;
+
         private LayoutAlgorithmSettings LayoutSettings { get; } = new SugiyamaLayoutSettings();
 
         internal CancellationTokenSource StartGraphRecalculation(QuestData quest)
@@ -104,16 +111,18 @@ namespace QuestoGraph.Windows
             var cts = new CancellationTokenSource();
             Task.Run(() =>
             {
+                var sw = new Stopwatch();
                 Plugin.Log.Debug($"Starting Graph");
+                sw.Start();
                 var info = this.GetGraphInfo(quest, cts.Token);
                 this.Graph = info.FinishedGraph;
                 this.CenterNode = info.CenterNode;
-                Plugin.Log.Debug($"Graph Finished");
+                sw.Stop();
+                Plugin.Log.Debug($"Graph Finished ({sw.Elapsed})");
             }, cts.Token);
 
             return cts;
         }
-
 
         private void DrawGraph(GeometryGraph graph)
         {
@@ -130,13 +139,13 @@ namespace QuestoGraph.Windows
 
             if (this.CenterNode != null)
             {
-                this._offset = this.CenterNode.Center.ToVector2() * -1 + (canvasBottomRight - canvasTopLeft) / 2;
+                this.centerOffset = this.CenterNode.Center.ToVector2() * -1 + ((canvasBottomRight - canvasTopLeft) / 2);
                 this.CenterNode = null;
             }
 
             drawList.PushClipRect(canvasTopLeft, canvasBottomRight, true);
+            drawList.AddRectFilled(canvasTopLeft, canvasBottomRight, Colors.Background);
 
-            drawList.AddRectFilled(canvasTopLeft, canvasBottomRight, Colors.Bg);
             // ========= GRID =========
             for (var i = 0; i < size.X / GridSmall; i++)
             {
@@ -158,11 +167,11 @@ namespace QuestoGraph.Windows
                 drawList.AddLine(new Vector2(canvasTopLeft.X, canvasTopLeft.Y + i * GridLarge), new Vector2(canvasBottomRight.X, canvasTopLeft.Y + i * GridLarge), Colors.Grid, 2.0f);
             }
 
-            drawList.AddRect(canvasTopLeft, canvasBottomRight, Colors.Bg2);
+            drawList.AddRect(canvasTopLeft, canvasBottomRight, Colors.Border);
 
             Vector2 ConvertDrawPoint(Point p)
             {
-                var ret = canvasBottomRight - (p.ToVector2() + this._offset);
+                var ret = canvasBottomRight - (p.ToVector2() + this.centerOffset);
                 return ret;
             }
 
@@ -316,23 +325,23 @@ namespace QuestoGraph.Windows
                 if (ImGui.IsMouseDragging(ImGuiMouseButton.Left))
                 {
                     var d = ImGui.GetMouseDragDelta();
-                    if (this._viewDrag)
+                    if (this.viewDrag)
                     {
-                        var delta = d - this._lastDragPos;
-                        this._offset -= delta;
+                        var delta = d - this.lastDragPos;
+                        this.centerOffset -= delta;
                     }
 
-                    this._viewDrag = true;
-                    this._lastDragPos = d;
+                    this.viewDrag = true;
+                    this.lastDragPos = d;
                 }
                 else
                 {
-                    this._viewDrag = false;
+                    this.viewDrag = false;
                 }
             }
             else
             {
-                if (!this._viewDrag)
+                if (!this.viewDrag)
                 {
                     var left = ImGui.IsMouseReleased(ImGuiMouseButton.Left);
                     var right = ImGui.IsMouseReleased(ImGuiMouseButton.Right);
@@ -367,7 +376,7 @@ namespace QuestoGraph.Windows
                     }
                 }
 
-                this._viewDrag = false;
+                this.viewDrag = false;
             }
 
             drawList.PopClipRect();
@@ -388,57 +397,13 @@ namespace QuestoGraph.Windows
             var links = new List<(uint Source, uint Target)>();
             var g = new GeometryGraph();
 
-            void AddNode(QuestData questData)
-            {
-                try
-                {
-                    //Plugin.Log.Debug($"AddNode({node.Name})");
-                    if (msaglNodes.ContainsKey(questData.RowId))
-                    {
-                        return;
-                    }
-
-                    var node = new GraphNode(questData);
-                    var dims = ImGui.CalcTextSize(node.Name) + TextOffset * 2;
-                    var graphNode = new Node(CurveFactory.CreateRectangle(dims.X, dims.Y, new Point()), node);
-                    g.Nodes.Add(graphNode);
-                    msaglNodes[questData.RowId] = graphNode;
-
-                    //IEnumerable<Node<QuestData>> parents;
-                    ////if (this.Plugin.Config.ShowRedundantArrows)
-                    //{
-                    //    //parents = node.Parents;
-                    //}
-                    //else
-                    //{
-                    //    // only add if no *other* parent also shares
-                    //    parents = node.Parents
-                    //        .Where(q => {
-                    //            return !node.Parents
-                    //                .Where(other => other != q)
-                    //                .Any(other => other.Parents.Contains(q));
-                    //        });
-                    //}
-
-                    foreach (var parentId in questData.PreviousQuestsId)
-                    {
-                        links.Add((parentId, questData.RowId));
-                    }
-                    //Plugin.Log.Debug($"{g.Nodes.Count} Nodes");
-                }
-                catch (Exception ex)
-                {
-                    Plugin.Log.Error(ex, "ERROR AddNode");
-                }
-            }
-
-            AddNode(questData);
+            this.AddNode(msaglNodes, links, g, questData);
 
             void AddNext(QuestData node)
             {
                 if (node != null)
                 {
-                    foreach (var nodeId in node.NextQuestIds)
+                    foreach (var nodeId in node.NextQuestIds.Reverse())
                     {
                         var nextNode = this.questsManager.QuestData[nodeId];
                         if (cancel.IsCancellationRequested)
@@ -446,7 +411,7 @@ namespace QuestoGraph.Windows
                             return;
                         }
 
-                        AddNode(nextNode);
+                        this.AddNode(msaglNodes, links, g, nextNode);
                         if (nextNode.PreviousQuestsId.Count > 0)
                         {
                             AddNext(nextNode);
@@ -460,13 +425,7 @@ namespace QuestoGraph.Windows
             {
                 if (node != null)
                 {
-
-                    if (node.RowId == 69602)
-                    {
-                        Plugin.Log.Info($"AAAAAAAAA - {node.Name}");
-                    }
-
-                    foreach (var nodeId in node.PreviousQuestsId)
+                    foreach (var nodeId in node.PreviousQuestsId.Reverse())
                     {
                         var prevNode = this.questsManager.QuestData[nodeId];
                         if (cancel.IsCancellationRequested)
@@ -474,13 +433,18 @@ namespace QuestoGraph.Windows
                             return;
                         }
 
-                        if (prevNode.RowId == 69602)
+                        if (this.config.Graph.CompressMSQ)
                         {
-                            Plugin.Log.Info($"BBBBBBB > {prevNode.PreviousQuestsId.Count} - {node.Name}");
+                            var result = this.CompressMSQ(prevNode);
+                            if (!string.IsNullOrEmpty(result.CompressedName))
+                            {
+                                var compressedNode = new GraphNode(nodeId, result.CompressedName);
+                                this.AddNode(msaglNodes, links, g, compressedNode);
+                                continue;
+                            }
                         }
 
-                        AddNode(prevNode);
-                        //if (prevNode.PreviousQuestsId.Count > 0 && !this.IsMSQ(prevNode))
+                        this.AddNode(msaglNodes, links, g, prevNode);
                         if (prevNode.PreviousQuestsId.Count > 0)
                         {
                             AddPrev(prevNode);
@@ -510,7 +474,7 @@ namespace QuestoGraph.Windows
                     }
 
                     var edge = new Edge(source, target);
-                    //if (this.Plugin.Config.ShowArrowheads)
+                    if (this.config.Graph.ShowArrowheads)
                     {
                         edge.EdgeGeometry = new EdgeGeometry
                         {
@@ -539,8 +503,77 @@ namespace QuestoGraph.Windows
                 : (g, centre);
         }
 
-        private bool CompressMSQ(QuestData questData)
+        private void AddNode(Dictionary<uint, Node> msaglNodes, List<(uint Source, uint Target)> links, GeometryGraph g, GraphNode customNode)
         {
+            try
+            {
+                if (msaglNodes.ContainsKey(customNode.QuestId))
+                {
+                    return;
+                }
+
+                var dims = ImGui.CalcTextSize(customNode.Name) + TextOffset * 2;
+                var graphNode = new Node(CurveFactory.CreateRectangle(dims.X, dims.Y, new Point()), customNode);
+                g.Nodes.Add(graphNode);
+                msaglNodes[customNode.QuestId] = graphNode;
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Error(ex, "ERROR AddNode CustomNode");
+            }
+        }
+
+        private void AddNode(Dictionary<uint, Node> msaglNodes, List<(uint Source, uint Target)> links, GeometryGraph g, QuestData questData)
+        {
+            try
+            {
+                //Plugin.Log.Debug($"AddNode({node.Name})");
+                if (msaglNodes.ContainsKey(questData.RowId))
+                {
+                    return;
+                }
+
+                var node = new GraphNode(questData);
+                var dims = ImGui.CalcTextSize(node.Name) + TextOffset * 2;
+                var graphNode = new Node(CurveFactory.CreateRectangle(dims.X, dims.Y, new Point()), node);
+                g.Nodes.Add(graphNode);
+                msaglNodes[questData.RowId] = graphNode;
+
+                //IEnumerable<Node<QuestData>> parents;
+                ////if (this.Plugin.Config.ShowRedundantArrows)
+                //{
+                //    //parents = node.Parents;
+                //}
+                //else
+                //{
+                //    // only add if no *other* parent also shares
+                //    parents = node.Parents
+                //        .Where(q => {
+                //            return !node.Parents
+                //                .Where(other => other != q)
+                //                .Any(other => other.Parents.Contains(q));
+                //        });
+                //}
+
+                foreach (var parentId in questData.PreviousQuestsId)
+                {
+                    links.Add((parentId, questData.RowId));
+                }
+                //Plugin.Log.Debug($"{g.Nodes.Count} Nodes");
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Error(ex, "ERROR AddNode");
+            }
+        }
+
+        private (uint QuestId, string? CompressedName) CompressMSQ(QuestData? questData)
+        {
+            if (questData == null)
+            {
+                return (0, null);
+            }
+
             var name = questData.RowId switch
             {
                 70058 => "A Realm Reborn (2.0)",
@@ -581,10 +614,12 @@ namespace QuestoGraph.Windows
                 70495 => "Dawntrail (7.0)",
                 70786 => "Crossroads (7.1)",
                 70842 => "Seekers of Eternity (7.2)",
+                70909 => "The Promise of Tomorrow (7.3)",
+                70970 => "Into the Mist (7.4)",
                 _ => null,
             };
 
-            return !string.IsNullOrWhiteSpace(name);
+            return (questData.RowId, name);
         }
     }
 }

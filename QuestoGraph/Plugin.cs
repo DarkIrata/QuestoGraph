@@ -10,7 +10,7 @@ namespace QuestoGraph
     internal class Plugin : IDalamudPlugin
     {
         //const string commandName = "/quests";
-        const string commandName = "/qs";
+        const string commandName = "/qog";
         public const string Name = "Quest'o'Graph";
 
         [PluginService]
@@ -56,19 +56,23 @@ namespace QuestoGraph
         {
             CommandManager.AddHandler(commandName, new CommandInfo((_, args) => this.uiManager.ToggleMain(args))
             {
-                HelpMessage = "Show Quests",
+                HelpMessage = $"Show Quests. {commandName} <Quest Name> to open prefiltered",
             });
 
+#if DEBUG
             CommandManager.AddHandler("/qdebug", new CommandInfo((_, args) => this.uiManager.ToggleDebug())
             {
                 HelpMessage = "Show debug Quests",
             });
+#endif
         }
 
         public void Dispose()
         {
             CommandManager.RemoveHandler(commandName);
+#if DEBUG
             CommandManager.RemoveHandler("/qdebug");
+#endif
         }
     }
 }

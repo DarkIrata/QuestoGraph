@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
-    <Version>0.8.6.1</Version>
+    <Version>0.8.7.0</Version>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>QuestoGraph</RootNamespace>
     <Nullable>enable</Nullable>

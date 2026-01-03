@@ -13,10 +13,15 @@
             this.Name = name;
         }
 
-        public GraphNode(QuestData questData)
+        public GraphNode(uint questId, string name)
+            : this(name)
         {
-            this.QuestId = questData.RowId;
-            this.Name = questData.Name;
+            this.QuestId = questId;
+        }
+
+        public GraphNode(QuestData questData)
+            : this(questData.RowId, questData.Name)
+        {
             this.QuestData = questData;
         }
     }
