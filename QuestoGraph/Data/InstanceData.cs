@@ -24,8 +24,8 @@ namespace QuestoGraph.Data
             var contentFinder = Plugin.DataManager.GetExcelSheet<ContentFinderCondition>(Dalamud.Game.ClientLanguage.English)!
                 .FirstOrDefault(cfc => cfc.Content.RowId == contentRowId && cfc.ContentLinkType == 1);
 
-            if (contentFinder.RowId == 0 ||
-                contentFinder.UnlockQuest.RowId != 0)
+            if (contentFinder.RowId == 0)
+            //contentFinder.UnlockQuest.RowId != 0) // TODO: Need to find out, to what that was changed
             {
                 return;
             }
