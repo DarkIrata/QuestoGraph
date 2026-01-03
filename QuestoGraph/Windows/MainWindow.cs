@@ -259,7 +259,7 @@ namespace QuestoGraph.Windows
                             (uint)action.Icon,
                             targetIconSize,
                             targetIconSize,
-                            $"Unlocks {action.Name}",
+                            $"Unlocks {action.Name} - General Action",
                             false);
                     }
                 }
@@ -282,7 +282,7 @@ namespace QuestoGraph.Windows
                         questData.BeastTribe.Icon,
                         targetIconSize,
                         targetIconSize,
-                        $"Unlocks {questData.BeastTribe.Name.ExtractText()}",
+                        $"Unlocks {questData.BeastTribe.Name.ExtractText()} - Societal",
                         false);
                 }
                 ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 7f);
@@ -304,7 +304,7 @@ namespace QuestoGraph.Windows
                         GameUtils.GetJobIconId(questData.JobUnlock),
                         jobIconSize,
                         jobIconSize,
-                        $"Unlocks {questData.JobUnlock.NameEnglish.ExtractText()}",
+                        $"Unlocks {questData.JobUnlock.NameEnglish.ExtractText()} - Job",
                         false);
                 }
                 ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 7f);
