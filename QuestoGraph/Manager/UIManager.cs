@@ -69,7 +69,17 @@ namespace QuestoGraph.Manager
             }
 
             this.mainWindow.Prefilter(args);
-            this.mainWindow.Toggle();
+            if (this.mainWindow.IsOpen)
+            {
+                if (string.IsNullOrEmpty(args))
+                {
+                    this.mainWindow.Toggle();
+                }
+            }
+            else
+            {
+                this.mainWindow.Toggle();
+            }
         }
 
         public void ToggleSettings() => this.settingsWindow.Toggle();
