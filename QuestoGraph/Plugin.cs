@@ -9,29 +9,33 @@ namespace QuestoGraph
 {
     internal class Plugin : IDalamudPlugin
     {
-        const string commandName = "/quests";
+        //const string commandName = "/quests";
+        const string commandName = "/qs";
         public const string Name = "Quest'o'Graph";
 
         [PluginService]
-        internal static IDalamudPluginInterface Interface { get; private set; } = null!;
+        internal static IDalamudPluginInterface Interface { get; } = null!;
 
         [PluginService]
-        internal static IClientState ClientState { get; private set; } = null!;
+        internal static IClientState ClientState { get; } = null!;
 
         [PluginService]
-        internal static ICommandManager CommandManager { get; private set; } = null!;
+        internal static ICommandManager CommandManager { get; } = null!;
 
         [PluginService]
-        internal static IDataManager DataManager { get; private set; } = null!;
+        internal static IDataManager DataManager { get; } = null!;
 
         [PluginService]
-        internal static ITextureProvider TextureProvider { get; private set; } = null!;
+        internal static ITextureProvider TextureProvider { get; } = null!;
 
         [PluginService]
-        internal static IGameGui GameGui { get; private set; } = null!;
+        internal static IGameGui GameGui { get; } = null!;
 
         [PluginService]
-        internal static IPluginLog Log { get; private set; } = null!;
+        internal static IPluginLog Log { get; } = null!;
+
+        [PluginService]
+        internal static IChatGui ChatGui { get; } = null!;
 
         private Config Config { get; }
 
@@ -54,11 +58,17 @@ namespace QuestoGraph
             {
                 HelpMessage = "Show Quests",
             });
+
+            CommandManager.AddHandler("/qdebug", new CommandInfo((_, args) => this.uiManager.ToggleDebug())
+            {
+                HelpMessage = "Show debug Quests",
+            });
         }
 
         public void Dispose()
         {
             CommandManager.RemoveHandler(commandName);
+            CommandManager.RemoveHandler("/qdebug");
         }
     }
 }

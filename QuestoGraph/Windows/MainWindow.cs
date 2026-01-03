@@ -1,10 +1,10 @@
-﻿using Dalamud.Game.Text.SeStringHandling.Payloads;
+﻿using Dalamud.Bindings.ImGui;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using FFXIVClientStructs.FFXIV.Common.Math;
-using ImGuiNET;
 using QuestoGraph.Data;
 using QuestoGraph.Data.Settings;
 using QuestoGraph.Enums;
@@ -143,7 +143,11 @@ namespace QuestoGraph.Windows
         {
             if (questData.PreviousQuestsId.Count > 0)
             {
+#if DEBUG
+                ImGui.TextUnformatted($"Previous Quests ({questData.PreviousQuestsId.Count}):");
+#else
                 ImGui.TextUnformatted("Previous Quests:");
+#endif
                 using (var child = ImRaii.Child("##PrevQuests", new System.Numerics.Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetContentRegionAvail().Y * 0.45f), false, ImGuiWindowFlags.HorizontalScrollbar))
                 {
                     if (child.Success)
@@ -162,7 +166,11 @@ namespace QuestoGraph.Windows
         {
             if (questData.NextQuestIds.Count > 0)
             {
+#if DEBUG
+                ImGui.TextUnformatted($"Next Quests ({questData.NextQuestIds.Count}):");
+#else
                 ImGui.TextUnformatted("Next Quests:");
+#endif
                 using (var child = ImRaii.Child("##NextQuests", new System.Numerics.Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetContentRegionAvail().Y), false, ImGuiWindowFlags.HorizontalScrollbar))
                 {
                     if (child.Success)
@@ -345,6 +353,9 @@ namespace QuestoGraph.Windows
 
             var journalText = questData.Quest.JournalGenre.IsValid ? questData.Quest.JournalGenre.Value.Name.ExtractText() : string.Empty;
             var levelReqAndName = $"(Lvl: {questData.Quest.ClassJobLevel[0]}) {questData!.Name}";
+#if DEBUG
+            levelReqAndName += $" (ID: {questData.RowId})";
+#endif
             MapLinkPayload? issuerPayload = null;
             var location = "";
 
@@ -383,7 +394,7 @@ namespace QuestoGraph.Windows
                 freePos.SetY(freePos.LastPos.Y - ImGui.CalcTextSize(metaInfo).Y);
                 if (ImGui.Button($"{FontAwesomeIcon.Book.ToIconString()}##QuestsLog_" + questData.RowId, new Vector2(buttonSize, buttonSize)))
                 {
-                    GameUtils.ShowInQuestJournal(questData.RowId, questData.QuestType);
+                    GameUtils.ShowInQuestJournal(questData.RowId);
                 }
             }
             ImGuiUtils.Tooltip("Try open in quest journal");

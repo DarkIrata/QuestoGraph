@@ -1,9 +1,10 @@
 ﻿using Dalamud.Game.Text.SeStringHandling.Payloads;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
 
 namespace QuestoGraph.Utils
 {
-    internal static class GameUtils
+    internal unsafe static class GameUtils
     {
         internal static MapLinkPayload GetMapPayload(Level issuerLevel, float modifier = 1000f) // Scaling again so its more precise?
         {
@@ -20,6 +21,9 @@ namespace QuestoGraph.Utils
 
         internal static void ShowMapPos(MapLinkPayload payload)
             => Plugin.GameGui.OpenMapWithMapLink(payload);
+
+        internal static void ShowInQuestJournal(uint questId)
+            => AgentQuestJournal.Instance()->OpenForQuest(questId, 1u); // 2 would be Leves?
 
         internal static int CalculateExp(Quest quest)
         {

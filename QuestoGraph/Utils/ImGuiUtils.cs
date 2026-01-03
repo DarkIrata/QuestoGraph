@@ -1,10 +1,10 @@
 ﻿using System.Numerics;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using ImGuiNET;
 using QuestoGraph.Data;
 using QuestoGraph.Data.Settings;
 using QuestoGraph.Enums;
@@ -92,7 +92,7 @@ namespace QuestoGraph.Utils
             {
                 var imageSize = new Vector2(maxWidth + (padding * 2), (maxWidth * image.Height) / image.Width);
                 ImGui.SetCursorPosX(0 + padding);
-                ImGui.Image(image.ImGuiHandle, imageSize);
+                ImGui.Image(image.Handle, imageSize);
             }
             else
             {
@@ -112,7 +112,7 @@ namespace QuestoGraph.Utils
                     const ushort doneIconSize = 32;
                     var tempCursorPos = ImGui.GetCursorPos();
                     ImGui.SetCursorPos(new Vector2(ImGui.GetContentRegionAvail().X - doneIconSize - 5f, tempCursorPos.Y - doneIconSize - 10f));
-                    ImGui.Image(doneIcon.ImGuiHandle, new Vector2(doneIconSize, doneIconSize));
+                    ImGui.Image(doneIcon.Handle, new Vector2(doneIconSize, doneIconSize));
                     Tooltip("Quest completed");
                     ImGui.SetCursorPos(tempCursorPos);
                 }
@@ -136,7 +136,7 @@ namespace QuestoGraph.Utils
             if (icon != null)
             {
                 //ImGui.Image(icon.ImGuiHandle, new Vector2(width, height), Vector2.Zero, Vector2.One, new Vector4(1f, 1f, 1f, 0.25f));
-                ImGui.Image(icon.ImGuiHandle, new Vector2(width, height), Vector2.Zero, Vector2.One, new Vector4(1f, 1f, 1f, 1f));
+                ImGui.Image(icon.Handle, new Vector2(width, height), Vector2.Zero, Vector2.One, new Vector4(1f, 1f, 1f, 1f));
                 if (!string.IsNullOrEmpty(tooltip))
                 {
                     Tooltip(tooltip);
@@ -192,7 +192,7 @@ namespace QuestoGraph.Utils
                     const ushort padding = 10;
                     var regAvail = ImGui.GetWindowSize();
                     fp.SetPos(regAvail.X - size - padding, regAvail.Y - size - padding);
-                    ImGui.Image(pinguIcon.ImGuiHandle, new Vector2(size, size), Vector2.Zero, Vector2.One, new Vector4(1f, 1f, 1f, 0.25f));
+                    ImGui.Image(pinguIcon.Handle, new Vector2(size, size), Vector2.Zero, Vector2.One, new Vector4(1f, 1f, 1f, 0.25f));
                 }
             }
         }
