@@ -77,9 +77,11 @@ namespace QuestoGraph.Windows
                     case Options.Colors:
                         this.DrawColorOptions();
                         break;
+#if DEBUG
                     case Options.Graph:
                         this.DrawGraphOptions();
                         break;
+#endif
                     case Options.About:
                     default:
                         this.DrawAbout();
