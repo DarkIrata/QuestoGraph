@@ -86,11 +86,6 @@ namespace QuestoGraph.Data
 
         private ClassJob ParseJobUnlock(Quest quest)
         {
-            if (quest.ClassJobUnlock.RowId > 0)
-            {
-                return quest.ClassJobUnlock.Value;
-            }
-
             const string ClassJobScriptInstruct = "CLASSJOB";
             if (quest.QuestParams.Any(param => param.ScriptInstruction.ExtractText().Contains(ClassJobScriptInstruct)))
             {
