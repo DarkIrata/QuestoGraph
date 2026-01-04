@@ -1,4 +1,5 @@
 ﻿using Dalamud.Bindings.ImGui;
+using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
@@ -57,19 +58,28 @@ namespace QuestoGraph.Windows
                     {
                         if (child.Success)
                         {
-                            foreach (var questData in this.questsManager.GetFilteredList(this.filter))
+                            if (this.questsManager.CurrentState == QuestsManager.State.Initialized)
                             {
-                                var isSelected = this.selectedQuestData == questData;
-                                if (ImGuiUtils.SelectableQuest(this.config.Colors, questData, null, ref isSelected))
+                                foreach (var questData in this.questsManager.GetFilteredList(this.filter))
                                 {
-                                    this.selectedQuestData = questData;
-                                    isSelected = true;
-                                }
+                                    var isSelected = this.selectedQuestData == questData;
+                                    if (ImGuiUtils.SelectableQuest(this.config.Colors, questData, null, ref isSelected))
+                                    {
+                                        this.selectedQuestData = questData;
+                                        isSelected = true;
+                                    }
 
-                                if (isSelected)
-                                {
-                                    ImGui.SetItemDefaultFocus();
+                                    if (isSelected)
+                                    {
+                                        ImGui.SetItemDefaultFocus();
+                                    }
                                 }
+                            }
+                            else
+                            {
+                                const string text = "Loading..";
+                                ImGui.SetCursorPos((ImGui.GetContentRegionAvail() - ImGui.CalcTextSize(text)) * 0.5f);
+                                ImGui.TextUnformatted(text);
                             }
                         }
                     }
@@ -114,6 +124,21 @@ namespace QuestoGraph.Windows
             {
                 if (container.Success)
                 {
+                    if (this.questsManager.CurrentState == QuestsManager.State.Initializing)
+                    {
+                        var diameter = 64f;
+                        ImGui.SetCursorPos((ImGui.GetContentRegionAvail() - new System.Numerics.Vector2(diameter, diameter)) * 0.5f);
+                        ImGuiUtils.DrawWeirdSpinner(
+                            radius: diameter / 2,
+                            thickness: 3f,
+                            color: ImGui.GetColorU32(ImGuiCol.ButtonHovered)
+                        );
+
+                        this.selectedQuestData = null;
+
+                        return;
+                    }
+
                     if (this.selectedQuestData == null)
                     {
                         const string text = "♪ No quest selected ♫";
@@ -407,6 +432,12 @@ namespace QuestoGraph.Windows
                 this.filter = args;
                 this.selectedQuestData = this.questsManager.GetFilteredList(this.filter).FirstOrDefault();
             }
+        }
+
+        internal void RefreshList()
+        {
+            Plugin.Log.Info("Refreshing List");
+            this.questsManager.RefreshList();
         }
     }
 }

@@ -7,6 +7,8 @@ namespace QuestoGraph.Data.Settings
     {
         public int Version { get; set; } = 1;
 
+        public GeneralSettings General { get; set; } = new GeneralSettings();
+
         public DisplaySettings Display { get; set; } = new DisplaySettings();
 
         public SearchSettings Search { get; set; } = new SearchSettings();

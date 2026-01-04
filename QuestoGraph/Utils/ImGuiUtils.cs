@@ -196,5 +196,28 @@ namespace QuestoGraph.Utils
                 }
             }
         }
+
+        internal static void DrawWeirdSpinner(float radius, float thickness, uint color, float segments = 30)
+        {
+            var drawList = ImGui.GetWindowDrawList();
+            var pos = ImGui.GetCursorScreenPos();
+            ImGui.Dummy(new Vector2(radius * 2, radius * 2));
+
+            var time = (float)ImGui.GetTime();
+            float start = MathF.Abs(MathF.Sin(time * 1.5f)) * (segments - 3);
+
+            drawList.PathClear();
+
+            for (int i = 0; i < segments; i++)
+            {
+                var angle = (i / segments) * MathF.PI * (MathF.Sin(time * 1.2f) * 1.5f) + start;
+                drawList.PathLineTo(new Vector2(
+                    pos.X + radius + (MathF.Cos(angle) * radius),
+                    pos.Y + radius + (MathF.Sin(angle) * radius)
+                ));
+            }
+
+            drawList.PathStroke(color, ImDrawFlags.None, thickness);
+        }
     }
 }

@@ -1,10 +1,12 @@
 ﻿using System.Numerics;
 using System.Reflection;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Game;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using QuestoGraph.Data.Settings;
+using QuestoGraph.Manager;
 using QuestoGraph.Utils;
 
 namespace QuestoGraph.Windows
@@ -13,6 +15,7 @@ namespace QuestoGraph.Windows
     {
         private enum Options
         {
+            General,
             Filter,
             Colors,
 #if DEBUG
@@ -21,16 +24,20 @@ namespace QuestoGraph.Windows
             About,
         }
 
-        private Options selectedOption = Options.Filter;
-
         private readonly Config config;
         private readonly Config backupConfig = new();
         private readonly Version assemblyVersion = Assembly.GetExecutingAssembly()?.GetName()?.Version ?? new Version(0, 0);
+        private readonly QuestsManager questsManager;
 
-        public SettingsWindow(Config config)
+        private Options selectedOption = Options.General;
+        private ClientLanguage originalLanguage = ClientLanguage.English;
+
+        public SettingsWindow(Config config, QuestsManager questsManager)
             : base($"{Plugin.Name} - Settings##Settings", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoResize)
         {
             this.config = config;
+            this.questsManager = questsManager;
+            this.originalLanguage = this.config.General.Language;
 
             var windowSize = new Vector2(375, 310);
             this.SizeConstraints = new WindowSizeConstraints
@@ -46,6 +53,15 @@ namespace QuestoGraph.Windows
 
             Plugin.Log.Info("Saving configuration");
             Plugin.Interface.SavePluginConfig(this.config);
+
+            if (this.config.General.Language != this.originalLanguage)
+            {
+                this.questsManager.ReInitialize();
+            }
+            else
+            {
+                this.questsManager.RefreshList();
+            }
         }
 
         public void Dispose()
@@ -71,26 +87,29 @@ namespace QuestoGraph.Windows
             {
                 switch (this.selectedOption)
                 {
+                    case Options.General:
+                        this.DrawGeneralOption();
+                        break;
                     case Options.Filter:
-                        this.DrawFilterOptions();
+                        this.DrawFilterOption();
                         break;
                     case Options.Colors:
-                        this.DrawColorOptions();
+                        this.DrawColorOption();
                         break;
 #if DEBUG
                     case Options.Graph:
-                        this.DrawGraphOptions();
+                        this.DrawGraphOption();
                         break;
 #endif
                     case Options.About:
                     default:
-                        this.DrawAbout();
+                        this.DrawAboutOption();
                         break;
                 }
             }
         }
 
-        private void DrawAbout()
+        private void DrawAboutOption()
         {
             ImGuiHelpers.CenteredText("•°*•._ Quest'o'Graph _.•*°•");
             ImGuiHelpers.CenteredText($"v{this.assemblyVersion}");
@@ -106,7 +125,17 @@ namespace QuestoGraph.Windows
             ImGui.BulletText("All the testers");
         }
 
-        private void DrawFilterOptions()
+        private void DrawGeneralOption()
+        {
+            ImGuiUtils.SeperatorWithText("Display");
+            using (var indent = new ImRaii.Indent())
+            {
+                indent.Push(1);
+                this.config.General.Language = this.Combobox("Language", this.config.General.Language, Plugin.DataManager.Language, Enum.GetValues<ClientLanguage>());
+            }
+        }
+
+        private void DrawFilterOption()
         {
             ImGuiUtils.SeperatorWithText("Display");
             using (var indent = new ImRaii.Indent())
@@ -132,15 +161,19 @@ namespace QuestoGraph.Windows
             }
         }
 
-        private void DrawColorOptions()
+        private void DrawColorOption()
         {
             ImGuiUtils.SeperatorWithText("Sidebar");
 
-            this.config.Colors.SidebarDefaultColor = this.ColorEdit("Default Quest", "Default", this.config.Colors.SidebarDefaultColor, this.backupConfig.Colors.SidebarDefaultColor);
-            this.config.Colors.SidebarCompletedColor = this.ColorEdit("Completed Quest", "DoneQuest", this.config.Colors.SidebarCompletedColor, this.backupConfig.Colors.SidebarCompletedColor);
+            using (var indent = new ImRaii.Indent())
+            {
+                indent.Push(1);
+                this.config.Colors.SidebarDefaultColor = this.ColorEdit("Default Quest", "Default", this.config.Colors.SidebarDefaultColor, this.backupConfig.Colors.SidebarDefaultColor);
+                this.config.Colors.SidebarCompletedColor = this.ColorEdit("Completed Quest", "DoneQuest", this.config.Colors.SidebarCompletedColor, this.backupConfig.Colors.SidebarCompletedColor);
+            }
         }
 
-        private void DrawGraphOptions()
+        private void DrawGraphOption()
         {
             ImGuiUtils.SeperatorWithText("Display");
             using (var indent = new ImRaii.Indent())
@@ -160,6 +193,45 @@ namespace QuestoGraph.Windows
             }
 
             return state;
+        }
+
+        private T Combobox<T>(string label, T currentValue, T fallbackValue, params T[] items)
+        {
+            if (items.Length < 1)
+            {
+                return currentValue;
+            }
+
+            var selectedIndex = items.IndexOf(currentValue);
+            if (selectedIndex < 0)
+            {
+                selectedIndex = items.IndexOf(fallbackValue);
+                if (selectedIndex < 0)
+                {
+                    selectedIndex = 0;
+                }
+            }
+
+            if (ImGui.BeginCombo(label, items[selectedIndex]?.ToString()))
+            {
+                for (int i = 0; i < items.Length; i++)
+                {
+                    var isSelected = (i == selectedIndex);
+                    if (ImGui.Selectable(items[i]?.ToString(), isSelected))
+                    {
+                        selectedIndex = i;
+                    }
+
+                    if (isSelected)
+                    {
+                        ImGui.SetItemDefaultFocus();
+                    }
+                }
+
+                ImGui.EndCombo();
+            }
+
+            return items[selectedIndex];
         }
 
         private Vector4 ColorEdit(string text, string resetButtonSuffix, Vector4 color, Vector4 reset)
