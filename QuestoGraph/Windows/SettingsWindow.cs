@@ -37,7 +37,6 @@ namespace QuestoGraph.Windows
         {
             this.config = config;
             this.questsManager = questsManager;
-            this.originalLanguage = this.config.General.Language;
 
             var windowSize = new Vector2(375, 310);
             this.SizeConstraints = new WindowSizeConstraints
@@ -45,6 +44,14 @@ namespace QuestoGraph.Windows
                 MinimumSize = windowSize,
                 MaximumSize = windowSize,
             };
+        }
+
+        public override void OnOpen()
+        {
+            base.OnOpen();
+
+            this.originalLanguage = this.config.General.Language;
+            Plugin.Log.Debug($"Org Language: {this.originalLanguage}");
         }
 
         public override void OnClose()
