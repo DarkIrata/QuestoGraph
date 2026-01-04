@@ -134,7 +134,15 @@ namespace QuestoGraph.Windows
 
         private void DrawGeneralOption()
         {
-            ImGuiUtils.SeperatorWithText("Display");
+            ImGuiUtils.SeperatorWithText("Info");
+            using (var indent = new ImRaii.Indent())
+            {
+                indent.Push(1);
+                ImGui.TextUnformatted("Quests will be refreshed / reloaded");
+                ImGui.TextUnformatted("when you close settings.");
+            }
+
+            ImGuiUtils.SeperatorWithText("Quests");
             using (var indent = new ImRaii.Indent())
             {
                 indent.Push(1);
@@ -175,8 +183,14 @@ namespace QuestoGraph.Windows
             using (var indent = new ImRaii.Indent())
             {
                 indent.Push(1);
-                this.config.Colors.SidebarDefaultColor = this.ColorEdit("Default Quest", "Default", this.config.Colors.SidebarDefaultColor, this.backupConfig.Colors.SidebarDefaultColor);
+                this.config.Colors.SidebarDefaultColor = this.ColorEdit("Default Quest", "DefaultQuest", this.config.Colors.SidebarDefaultColor, this.backupConfig.Colors.SidebarDefaultColor);
                 this.config.Colors.SidebarCompletedColor = this.ColorEdit("Completed Quest", "DoneQuest", this.config.Colors.SidebarCompletedColor, this.backupConfig.Colors.SidebarCompletedColor);
+
+                this.config.Colors.SidebarMSQColor = this.ColorEdit("MSQ Quest", "MSQQuest", this.config.Colors.SidebarMSQColor, this.backupConfig.Colors.SidebarMSQColor);
+                this.config.Colors.SidebarMSQCompletedColor = this.ColorEdit("Completed MSQ Quest", "DoneMSQQuest", this.config.Colors.SidebarMSQCompletedColor, this.backupConfig.Colors.SidebarMSQCompletedColor);
+
+                this.config.Colors.SidebarBlueColor = this.ColorEdit("Blue Quest", "BlueQuest", this.config.Colors.SidebarBlueColor, this.backupConfig.Colors.SidebarBlueColor);
+                this.config.Colors.SidebarBlueCompletedColor = this.ColorEdit("Completed Blue Quest", "DoneBlueQuest", this.config.Colors.SidebarBlueCompletedColor, this.backupConfig.Colors.SidebarBlueCompletedColor);
             }
         }
 
@@ -252,6 +266,7 @@ namespace QuestoGraph.Windows
             }
 
             ImGui.SameLine();
+            ImGui.SetCursorPosX(ImGui.GetContentRegionMax().X - ImGui.CalcTextSize(resetButtonText).X - 10);
             if (ImGui.Button($"{resetButtonText}##{resetButtonSuffix}"))
             {
                 return reset;

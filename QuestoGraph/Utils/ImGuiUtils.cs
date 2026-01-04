@@ -155,11 +155,35 @@ namespace QuestoGraph.Utils
             {
                 if (QuestManager.IsQuestComplete(questData.RowId))
                 {
-                    color.Push(ImGuiCol.Text, colorSettings.SidebarCompletedColor);
+                    switch (questData.QuestType)
+                    {
+                        case QuestTypes.MSQ:
+                            color.Push(ImGuiCol.Text, colorSettings.SidebarMSQCompletedColor);
+                            break;
+                        case QuestTypes.Blue:
+                            color.Push(ImGuiCol.Text, colorSettings.SidebarBlueCompletedColor);
+                            break;
+                        case QuestTypes.Normal:
+                        default:
+                            color.Push(ImGuiCol.Text, colorSettings.SidebarCompletedColor);
+                            break;
+                    }
                 }
                 else
                 {
-                    color.Push(ImGuiCol.Text, colorSettings.SidebarDefaultColor);
+                    switch (questData.QuestType)
+                    {
+                        case QuestTypes.MSQ:
+                            color.Push(ImGuiCol.Text, colorSettings.SidebarMSQColor);
+                            break;
+                        case QuestTypes.Blue:
+                            color.Push(ImGuiCol.Text, colorSettings.SidebarBlueColor);
+                            break;
+                        case QuestTypes.Normal:
+                        default:
+                            color.Push(ImGuiCol.Text, colorSettings.SidebarDefaultColor);
+                            break;
+                    }
                 }
 
                 if (ImGui.Selectable($"{questData.Name}##{questData.RowId}{nameSuffix ?? string.Empty}", isSelected))
