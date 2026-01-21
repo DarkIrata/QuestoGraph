@@ -12,7 +12,7 @@ namespace QuestoGraph.Manager
         private readonly WindowSystem WindowSystem = new(Plugin.Name);
         private readonly MainWindow mainWindow;
         private readonly SettingsWindow settingsWindow;
-        private readonly DebugWindow debugWindow;
+        private readonly GraphWindow graphWindow;
 
         public UIManager(Config config, QuestsManager questsManager)
         {
@@ -21,10 +21,10 @@ namespace QuestoGraph.Manager
 
             this.mainWindow = new MainWindow(this.config, this.questsManager, this.WindowSystem);
             this.settingsWindow = new SettingsWindow(this.config, this.questsManager);
-            this.debugWindow = new DebugWindow(this.config, this.questsManager);
+            this.graphWindow = new GraphWindow(this.config, this.questsManager);
             this.WindowSystem.AddWindow(this.mainWindow);
             this.WindowSystem.AddWindow(this.settingsWindow);
-            this.WindowSystem.AddWindow(this.debugWindow);
+            this.WindowSystem.AddWindow(this.graphWindow);
 
             Plugin.Interface.UiBuilder.Draw += this.DrawUI;
             Plugin.Interface.UiBuilder.OpenMainUi += this.ToggleMain;
@@ -52,7 +52,7 @@ namespace QuestoGraph.Manager
 
             this.mainWindow.Dispose();
             this.settingsWindow.Dispose();
-            this.debugWindow.Dispose();
+            this.graphWindow.Dispose();
 
             Plugin.Interface.UiBuilder.Draw -= this.DrawUI;
         }
@@ -84,6 +84,6 @@ namespace QuestoGraph.Manager
 
         public void ToggleSettings() => this.settingsWindow.Toggle();
 
-        public void ToggleDebug() => this.debugWindow.Toggle();
+        public void ToggleDebug() => this.graphWindow.Toggle();
     }
 }

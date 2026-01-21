@@ -153,45 +153,23 @@ namespace QuestoGraph.Utils
         {
             using (var color = new ImRaii.Color())
             {
+                var targetColor = questData.QuestType switch
+                {
+                    QuestTypes.MSQ => colorSettings.SidebarMSQColor,
+                    QuestTypes.Blue => colorSettings.SidebarBlueColor,
+                    QuestTypes.Normal => colorSettings.SidebarDefaultColor,
+                    _ => colorSettings.SidebarDefaultColor,
+                };
+
+
                 if (QuestManager.IsQuestComplete(questData.RowId))
                 {
-                    switch (questData.QuestType)
-                    {
-                        case QuestTypes.MSQ:
-                            color.Push(ImGuiCol.Text, colorSettings.SidebarMSQCompletedColor);
-                            break;
-                        case QuestTypes.Blue:
-                            color.Push(ImGuiCol.Text, colorSettings.SidebarBlueCompletedColor);
-                            break;
-                        case QuestTypes.Normal:
-                        default:
-                            color.Push(ImGuiCol.Text, colorSettings.SidebarCompletedColor);
-                            break;
-                    }
-                }
-                else
-                {
-                    switch (questData.QuestType)
-                    {
-                        case QuestTypes.MSQ:
-                            color.Push(ImGuiCol.Text, colorSettings.SidebarMSQColor);
-                            break;
-                        case QuestTypes.Blue:
-                            color.Push(ImGuiCol.Text, colorSettings.SidebarBlueColor);
-                            break;
-                        case QuestTypes.Normal:
-                        default:
-                            color.Push(ImGuiCol.Text, colorSettings.SidebarDefaultColor);
-                            break;
-                    }
+                    targetColor.W = .5f;
                 }
 
-                if (ImGui.Selectable($"{questData.Name}##{questData.RowId}{nameSuffix ?? string.Empty}", isSelected))
-                {
-                    return true;
-                }
+                color.Push(ImGuiCol.Text, targetColor);
 
-                return false;
+                return ImGui.Selectable($"{questData.Name}##{questData.RowId}{nameSuffix ?? string.Empty}", isSelected);
             }
         }
 

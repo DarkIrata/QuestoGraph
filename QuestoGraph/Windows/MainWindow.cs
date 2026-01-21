@@ -126,7 +126,7 @@ namespace QuestoGraph.Windows
                 {
                     if (this.questsManager.CurrentState == QuestsManager.State.Initializing)
                     {
-                        var diameter = 64f;
+                        var diameter = 48f;
                         ImGui.SetCursorPos((ImGui.GetContentRegionAvail() - new System.Numerics.Vector2(diameter, diameter)) * 0.5f);
                         ImGuiUtils.DrawWeirdSpinner(
                             radius: diameter / 2,
@@ -408,6 +408,7 @@ namespace QuestoGraph.Windows
                         GameUtils.ShowMapPos(issuerPayload);
                     }
                 }
+
                 ImGuiUtils.Tooltip("Mark on map");
             }
 
@@ -422,6 +423,7 @@ namespace QuestoGraph.Windows
                     GameUtils.ShowInQuestJournal(questData.RowId);
                 }
             }
+
             ImGuiUtils.Tooltip("Try open in quest journal");
         }
 

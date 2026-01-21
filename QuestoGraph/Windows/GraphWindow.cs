@@ -1,28 +1,51 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics;
+using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Windowing;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Microsoft.Msagl.Core.Geometry;
 using Microsoft.Msagl.Core.Geometry.Curves;
 using Microsoft.Msagl.Core.Layout;
-using Microsoft.Msagl.Layout.Layered;
-using Microsoft.Msagl.Miscellaneous;
 using QuestoGraph.Data;
 using QuestoGraph.Data.Settings;
 using QuestoGraph.Manager;
+using QuestoGraph.Utils;
 
 namespace QuestoGraph.Windows
 {
-    internal static class MsaglExtensions
-    {
-        public static Vector2 ToVector2(this Point p)
-            => new((float)p.X, (float)p.Y);
-    }
-
     internal class GraphWindow : Window, IDisposable
     {
+        private static class Colors
+        {
+            internal static readonly uint Background = ImGui.ColorConvertFloat4ToU32(new Vector4(0.13f, 0.13f, 0.13f, 1));
+            internal static readonly uint Border = ImGui.ColorConvertFloat4ToU32(new Vector4(0.3f, 0.3f, 0.3f, 1));
+            internal static readonly uint Text = ImGui.ColorConvertFloat4ToU32(new Vector4(0.9f, 0.9f, 0.9f, 1));
+            internal static readonly uint Line = ImGui.ColorConvertFloat4ToU32(new Vector4(0.7f, 0.7f, 0.7f, 1));
+            internal static readonly uint Grid = ImGui.ColorConvertFloat4ToU32(new Vector4(0.1f, 0.1f, 0.1f, 1));
+        }
+
+        private const int GridSmall = 10;
+        private const int GridLarge = 50;
+        private const float GridSmallThickness = 1f;
+        private const float GridLargeThickness = 2f;
+        private const float GridZoomMultiplier = 1f;
+        private const float ZoomLevelModifier = 0.125f;
+        private const float MinZoomLevel = 0.125f;
+        private const float MaxZoomLevel = 2f;
+
         private readonly Config config;
         private readonly QuestsManager questsManager;
+
+        private GeometryGraph? Graph { get; set; }
+
+        private Node? CenterNode { get; set; }
+
+        private bool redrawLayout = true;
+        private Vector2 dragOffset = Vector2.Zero;
+        private float zoomLevel = 1f;
+        private bool viewDrag;
+        private Vector2 lastDragPos;
+        private QuestData? SelectedQuest;
 
         public GraphWindow(Config config, QuestsManager questsManager)
             : base($"{Plugin.Name} - Graph##GraphView", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
@@ -35,92 +58,85 @@ namespace QuestoGraph.Windows
                 MinimumSize = new Vector2(600, 600),
                 MaximumSize = new Vector2(1200, float.MaxValue),
             };
+        }
 
-            //this.SelectedQuest = this.questsManager.QuestData.FirstOrDefault(qd => qd.Value.Name.Contains("By Agents Unknown")).Value;
-            //this.SelectedQuest = this.questsManager.QuestData.FirstOrDefault(qd => qd.Value.Name.Contains("Dawntrail")).Value;
-            this.SelectedQuest = this.questsManager.QuestData.FirstOrDefault(qd => qd.Value.Name.Contains("Endwalker")).Value;
-            this.StartGraphRecalculation(this.SelectedQuest);
+        public override void OnOpen()
+        {
+            base.OnOpen();
+
+            this.SelectedQuest = this.questsManager.QuestData.FirstOrDefault(qd => qd.Value.Name.Contains("A Burst of Inspiration")).Value;
+            Plugin.Log.Warning((this.SelectedQuest == null) + " - IS SELECTED QUEST NULL ");
+            if (this.redrawLayout)
+            {
+                this.StartGraphRecalculation(this.SelectedQuest);
+                this.redrawLayout = false;
+            }
         }
 
         public void Dispose()
         {
         }
 
-        private GeometryGraph? Graph { get; set; }
-
-        private Node? CenterNode { get; set; }
-
         public override void Draw()
         {
             if (this.SelectedQuest == null)
             {
+                const string text = "♪ No quest selected ♫";
+                ImGui.SetCursorPos((ImGui.GetContentRegionAvail() - ImGui.CalcTextSize(text)) * 0.5f);
+                ImGui.TextUnformatted(text);
+
+                return;
+            }
+            else if (this.SelectedQuest.RowId == 0 || this.Graph == null)
+            {
+                var diameter = 86;
+                ImGui.SetCursorPos((ImGui.GetWindowSize() - new Vector2(diameter, diameter)) * 0.5f);
+                ImGuiUtils.DrawWeirdSpinner(
+                    radius: diameter / 2,
+                    thickness: 5f,
+                    color: ImGui.GetColorU32(ImGuiCol.ButtonHovered)
+                );
+
+                ImGui.SameLine();
+
+                const string text = "Loading";
+                ImGui.SetCursorPos((ImGui.GetWindowSize() - ImGui.CalcTextSize(text)) * 0.5f);
+                ImGui.TextUnformatted(text);
+
                 return;
             }
 
-            if (ImGui.BeginChild("quest-map", new Vector2(-1, -1)))
+            if (this.Graph != null && ImGui.BeginChild("quest-map", new Vector2(-1, -1)))
             {
-                if (this.SelectedQuest.RowId == 0 && this.Graph == null)
-                {
-                    ImGui.TextUnformatted("Generating map...");
-                }
-
-                if (this.Graph != null)
-                {
-                    this.DrawGraph(this.Graph);
-                }
+                this.DrawGraph(this.Graph);
 
                 ImGui.EndChild();
             }
         }
 
-        private static class Colors
-        {
-            internal static readonly uint Bg = ImGui.GetColorU32(new Vector4(0.13f, 0.13f, 0.13f, 1));
-            internal static readonly uint Bg2 = ImGui.GetColorU32(new Vector4(0.3f, 0.3f, 0.3f, 1));
-            internal static readonly uint Text = ImGui.GetColorU32(new Vector4(0.9f, 0.9f, 0.9f, 1));
-            internal static readonly uint Line = ImGui.GetColorU32(new Vector4(0.7f, 0.7f, 0.7f, 1));
-            internal static readonly uint Grid = ImGui.GetColorU32(new Vector4(0.1f, 0.1f, 0.1f, 1));
-
-            internal static readonly Vector4 NormalQuest = new(0.54f, 0.45f, 0.36f, 1);
-            internal static readonly Vector4 MsqQuest = new(0.29f, 0.35f, 0.44f, 1);
-            internal static readonly Vector4 BlueQuest = new(0.024F, 0.016f, 0.72f, 1);
-        }
-        private Vector2 GetTopLeft(GeometryObject item)
-        {
-            // imgui measures from top left as 0,0
-            return item.BoundingBox.RightTop.ToVector2() + this._offset;
-        }
-
-        private Vector2 GetBottomRight(GeometryObject item)
-        {
-            return item.BoundingBox.LeftBottom.ToVector2() + this._offset;
-        }
-
-        private bool _relayout;
-        private Vector2 _offset = Vector2.Zero;
-        private static readonly Vector2 TextOffset = new(5, 2);
-        private const int GridSmall = 10;
-        private const int GridLarge = 50;
-        private bool _viewDrag;
-        private Vector2 _lastDragPos;
-        private QuestData SelectedQuest;
-        private LayoutAlgorithmSettings LayoutSettings { get; } = new SugiyamaLayoutSettings();
-
-        internal CancellationTokenSource StartGraphRecalculation(QuestData quest)
+        internal CancellationTokenSource StartGraphRecalculation(QuestData? quest)
         {
             var cts = new CancellationTokenSource();
+
+            if (quest == null)
+            {
+                return cts;
+            }
+
             Task.Run(() =>
             {
+                var sw = new Stopwatch();
                 Plugin.Log.Debug($"Starting Graph");
-                var info = this.GetGraphInfo(quest, cts.Token);
+                sw.Start();
+                var info = GraphUtils.GetGraphInfo(quest, this.questsManager, this.config, cts.Token);
                 this.Graph = info.FinishedGraph;
                 this.CenterNode = info.CenterNode;
-                Plugin.Log.Debug($"Graph Finished");
+                sw.Stop();
+                Plugin.Log.Debug($"Graph Finished ({sw.Elapsed})");
             }, cts.Token);
 
             return cts;
         }
-
 
         private void DrawGraph(GeometryGraph graph)
         {
@@ -137,211 +153,66 @@ namespace QuestoGraph.Windows
 
             if (this.CenterNode != null)
             {
-                this._offset = this.CenterNode.Center.ToVector2() * -1 + (canvasBottomRight - canvasTopLeft) / 2;
+                this.dragOffset = (this.CenterNode.Center.ToVector2() * -1) + ((canvasBottomRight - canvasTopLeft) / 2);
                 this.CenterNode = null;
             }
 
             drawList.PushClipRect(canvasTopLeft, canvasBottomRight, true);
 
-            drawList.AddRectFilled(canvasTopLeft, canvasBottomRight, Colors.Bg);
-            // ========= GRID =========
-            for (var i = 0; i < size.X / GridSmall; i++)
-            {
-                drawList.AddLine(new Vector2(canvasTopLeft.X + i * GridSmall, canvasTopLeft.Y), new Vector2(canvasTopLeft.X + i * GridSmall, canvasBottomRight.Y), Colors.Grid, 1.0f);
-            }
+            // Background
+            drawList.AddRectFilled(canvasTopLeft, canvasBottomRight, Colors.Background);
 
-            for (var i = 0; i < size.Y / GridSmall; i++)
-            {
-                drawList.AddLine(new Vector2(canvasTopLeft.X, canvasTopLeft.Y + i * GridSmall), new Vector2(canvasBottomRight.X, canvasTopLeft.Y + i * GridSmall), Colors.Grid, 1.0f);
-            }
+            // Background Grid
+            this.DrawGrid(drawList, size, canvasTopLeft, canvasBottomRight);
 
-            for (var i = 0; i < size.X / GridLarge; i++)
-            {
-                drawList.AddLine(new Vector2(canvasTopLeft.X + i * GridLarge, canvasTopLeft.Y), new Vector2(canvasTopLeft.X + i * GridLarge, canvasBottomRight.Y), Colors.Grid, 2.0f);
-            }
+            // Border
+            drawList.AddRect(canvasTopLeft, canvasBottomRight, Colors.Border);
 
-            for (var i = 0; i < size.Y / GridLarge; i++)
-            {
-                drawList.AddLine(new Vector2(canvasTopLeft.X, canvasTopLeft.Y + i * GridLarge), new Vector2(canvasBottomRight.X, canvasTopLeft.Y + i * GridLarge), Colors.Grid, 2.0f);
-            }
+            // Content
+            this.DrawNodeConnections(drawList, graph.Edges, canvasTopLeft, canvasBottomRight);
+            var drawn = this.DrawNodes(drawList, graph.Nodes, canvasTopLeft, canvasBottomRight);
 
-            drawList.AddRect(canvasTopLeft, canvasBottomRight, Colors.Bg2);
-
-            Vector2 ConvertDrawPoint(Point p)
-            {
-                var ret = canvasBottomRight - (p.ToVector2() + this._offset);
-                return ret;
-            }
-
-            foreach (var edge in graph.Edges)
-            {
-                var start = canvasBottomRight - this.GetTopLeft(edge);
-                if (IsHidden(edge, start))
-                {
-                    continue;
-                }
-
-                var curve = edge.Curve;
-                switch (curve)
-                {
-                    case Curve c:
-                        {
-                            foreach (var s in c.Segments)
-                            {
-                                switch (s)
-                                {
-                                    case LineSegment l:
-                                        drawList.AddLine(
-                                            ConvertDrawPoint(l.Start),
-                                            ConvertDrawPoint(l.End),
-                                            Colors.Line,
-                                            3.0f
-                                        );
-                                        break;
-                                    case CubicBezierSegment cs:
-                                        drawList.AddBezierCubic(
-                                            ConvertDrawPoint(cs.B(0)),
-                                            ConvertDrawPoint(cs.B(1)),
-                                            ConvertDrawPoint(cs.B(2)),
-                                            ConvertDrawPoint(cs.B(3)),
-                                            Colors.Line,
-                                            3.0f
-                                        );
-                                        break;
-                                }
-                            }
-
-                            break;
-                        }
-                    case LineSegment l:
-                        drawList.AddLine(
-                            ConvertDrawPoint(l.Start),
-                            ConvertDrawPoint(l.End),
-                            Colors.Line,
-                            3.0f
-                        );
-                        break;
-                }
-
-                void DrawArrow(Vector2 start, Vector2 end)
-                {
-                    const float arrowAngle = 30f;
-                    var dir = end - start;
-                    var h = dir;
-                    dir /= dir.Length();
-
-                    var s = new Vector2(-dir.Y, dir.X);
-                    s *= (float)(h.Length() * Math.Tan(arrowAngle * 0.5f * (Math.PI / 180f)));
-
-                    drawList.AddTriangleFilled(
-                        start + s,
-                        end,
-                        start - s,
-                        Colors.Line
-                    );
-                }
-
-                if (edge.ArrowheadAtTarget)
-                {
-                    DrawArrow(
-                        ConvertDrawPoint(edge.Curve.End),
-                        ConvertDrawPoint(edge.EdgeGeometry.TargetArrowhead.TipPosition)
-                    );
-                }
-
-                if (edge.ArrowheadAtSource)
-                {
-                    DrawArrow(
-                        ConvertDrawPoint(edge.Curve.Start),
-                        ConvertDrawPoint(edge.EdgeGeometry.SourceArrowhead.TipPosition)
-                    );
-                }
-            }
-
-            bool IsHidden(GeometryObject node, Vector2 start)
-            {
-                var width = (float)node.BoundingBox.Width;
-                var height = (float)node.BoundingBox.Height;
-                return start.X + width < canvasTopLeft.X
-                       || start.Y + height < canvasTopLeft.Y
-                       || start.X > canvasBottomRight.X
-                       || start.Y > canvasBottomRight.Y;
-            }
-
-            var drawn = new List<(Vector2, Vector2, uint)>();
-
-            foreach (var node in graph.Nodes)
-            {
-                var start = canvasBottomRight - this.GetTopLeft(node);
-
-                if (IsHidden(node, start))
-                {
-                    continue;
-                }
-
-                var graphNode = (GraphNode)node.UserData;
-                var color = Colors.NormalQuest;
-                var textColour = Colors.Text;
-
-                // This could be in GraphNode so we dont need to call it everytime
-                if (graphNode.QuestData != null)
-                {
-                    var quest = graphNode.QuestData.Quest;
-                    color = quest.EventIconType.RowId switch
-                    {
-                        1 => Colors.NormalQuest, // normal
-                        3 => Colors.MsqQuest, // msq
-                        8 => Colors.BlueQuest, // blue
-                        10 => Colors.BlueQuest, // also blue
-                        _ => Colors.NormalQuest,
-                    };
-
-
-                    var completed = QuestManager.IsQuestComplete(quest.RowId);
-                    if (completed)
-                    {
-                        color.W = .5f;
-                        textColour = (uint)((0x80 << 24) | (textColour & 0xFFFFFF));
-                    }
-                }
-
-                var end = canvasBottomRight - this.GetBottomRight(node);
-
-                drawn.Add((start, end, graphNode.QuestId));
-
-                if (graphNode.QuestId == this.SelectedQuest.RowId)
-                {
-                    drawList.AddRect(start - Vector2.One, end + Vector2.One, Colors.Line, 5, ImDrawFlags.RoundCornersAll);
-                }
-
-                drawList.AddRectFilled(start, end, ImGui.GetColorU32(color), 5, ImDrawFlags.RoundCornersAll);
-                drawList.AddText(start + TextOffset, textColour, graphNode.Name);
-            }
-
-            // HOW ABOUT DRAGGING THE VIEW?
             if (ImGui.IsItemActive())
             {
                 if (ImGui.IsMouseDragging(ImGuiMouseButton.Left))
                 {
                     var d = ImGui.GetMouseDragDelta();
-                    if (this._viewDrag)
+                    if (this.zoomLevel < 1f)
                     {
-                        var delta = d - this._lastDragPos;
-                        this._offset -= delta;
+                        d /= (float)Math.Pow(this.zoomLevel, 1);
                     }
 
-                    this._viewDrag = true;
-                    this._lastDragPos = d;
+                    if (this.viewDrag)
+                    {
+                        var delta = d - this.lastDragPos;
+                        this.dragOffset -= delta;
+                    }
+
+                    this.viewDrag = true;
+                    this.lastDragPos = d;
                 }
                 else
                 {
-                    this._viewDrag = false;
+                    this.viewDrag = false;
                 }
             }
             else
             {
-                if (!this._viewDrag)
+                if (!this.viewDrag)
                 {
+                    var io = ImGui.GetIO();
+                    if (io.MouseWheel != 0)
+                    {
+                        if (io.MouseWheel < 0 && this.zoomLevel > MinZoomLevel)
+                        {
+                            this.zoomLevel -= ZoomLevelModifier;
+                        }
+                        else if (io.MouseWheel > 0 && this.zoomLevel < MaxZoomLevel)
+                        {
+                            this.zoomLevel += ZoomLevelModifier;
+                        }
+                    }
+
                     var left = ImGui.IsMouseReleased(ImGuiMouseButton.Left);
                     var right = ImGui.IsMouseReleased(ImGuiMouseButton.Right);
                     if (left || right)
@@ -357,11 +228,16 @@ namespace QuestoGraph.Windows
 
                             if (left)
                             {
+                                //this.InfoWindows.Add(id);
                                 Plugin.Log.Debug("LEFT");
                             }
 
                             if (right)
                             {
+                                //unsafe
+                                //{
+                                //    AgentQuestJournal.Instance()->OpenForQuest(id, 1);
+                                //}
                                 Plugin.Log.Debug("RIGHT");
                             }
 
@@ -370,250 +246,203 @@ namespace QuestoGraph.Windows
                     }
                 }
 
-                this._viewDrag = false;
+                this.viewDrag = false;
             }
 
             drawList.PopClipRect();
             ImGui.EndGroup();
-            // ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 5);
         }
 
-        private (GeometryGraph? FinishedGraph, Node? CenterNode) GetGraphInfo(QuestData questData, CancellationToken cancel)
+        private void DrawNodeConnections(ImDrawListPtr drawList, EdgeCollection edges, Vector2 canvasTopLeft, Vector2 canvasBottomRight)
         {
-            if (questData == null)
+            void DrawNodeLine(LineSegment line)
             {
-                return (null, null);
+                drawList.AddLine(
+                    this.ConvertDrawPoint(canvasBottomRight, line.Start),
+                    this.ConvertDrawPoint(canvasBottomRight, line.End),
+                    Colors.Line,
+                    3.0f * this.zoomLevel
+                );
             }
 
-            //Plugin.Log.Debug($"Graph for: {questData!.Name}");
-
-            var msaglNodes = new Dictionary<uint, Node>();
-            var links = new List<(uint Source, uint Target)>();
-            var g = new GeometryGraph();
-
-            void AddGraphNode(GraphNode node)
+            foreach (var edge in edges)
             {
-                try
+                var start = canvasBottomRight - (edge.GetTopLeft(this.dragOffset) * this.zoomLevel);
+                if (this.IsHidden(canvasTopLeft, canvasBottomRight, edge, start))
                 {
-                    var dims = ImGui.CalcTextSize(node.Name) + TextOffset * 2;
-                    var graphNode = new Node(CurveFactory.CreateRectangle(dims.X, dims.Y, new Point()), node);
-                    g.Nodes.Add(graphNode);
-                    msaglNodes[questData.RowId] = graphNode;
+                    continue;
+                }
 
-                    //IEnumerable<Node<QuestData>> parents;
-                    ////if (this.Plugin.Config.ShowRedundantArrows)
-                    //{
-                    //    //parents = node.Parents;
-                    //}
-                    //else
-                    //{
-                    //    // only add if no *other* parent also shares
-                    //    parents = node.Parents
-                    //        .Where(q => {
-                    //            return !node.Parents
-                    //                .Where(other => other != q)
-                    //                .Any(other => other.Parents.Contains(q));
-                    //        });
-                    //}
-
-                    foreach (var parentId in questData.PreviousQuestsId)
+                if (edge.Curve is Curve curve)
+                {
+                    foreach (var segment in curve.Segments)
                     {
-                        links.Add((parentId, questData.RowId));
-                    }
-                    //Plugin.Log.Debug($"{g.Nodes.Count} Nodes");
-                }
-                catch (Exception ex)
-                {
-                    Plugin.Log.Error(ex, "ERROR AddGraphNode");
-                }
-            }
-
-            void AddNode(QuestData questData)
-            {
-                try
-                {
-                    //Plugin.Log.Debug($"AddNode({node.Name})");
-                    if (msaglNodes.ContainsKey(questData.RowId))
-                    {
-                        return;
-                    }
-
-                    var node = new GraphNode(questData);
-                    AddGraphNode(node);
-                }
-                catch (Exception ex)
-                {
-                    Plugin.Log.Error(ex, "ERROR AddNode");
-                }
-            }
-
-            void AddNext(QuestData node)
-            {
-                if (node != null)
-                {
-                    foreach (var nodeId in node.NextQuestIds)
-                    {
-                        var nextNode = this.questsManager.QuestData[nodeId];
-                        if (cancel.IsCancellationRequested)
+                        if (segment is LineSegment line)
                         {
-                            return;
+                            DrawNodeLine(line);
                         }
-
-                        AddNode(nextNode);
-                        if (nextNode.PreviousQuestsId.Count > 0)
+                        else if (segment is CubicBezierSegment cs)
                         {
-                            AddNext(nextNode);
+                            drawList.AddBezierCubic(
+                                this.ConvertDrawPoint(canvasBottomRight, cs.B(0)),
+                                this.ConvertDrawPoint(canvasBottomRight, cs.B(1)),
+                                this.ConvertDrawPoint(canvasBottomRight, cs.B(2)),
+                                this.ConvertDrawPoint(canvasBottomRight, cs.B(3)),
+                                Colors.Line,
+                                3.0f
+                            );
                         }
                     }
                 }
-            }
-
-            void AddPrev(QuestData node)
-            {
-                if (node != null)
+                else if (edge.Curve is LineSegment line)
                 {
+                    DrawNodeLine(line);
+                }
 
-                    if (node.RowId == 69602)
-                    {
-                        Plugin.Log.Info($"AAAAAAAAA - {node.Name}");
-                    }
+                if (edge.ArrowheadAtTarget)
+                {
+                    this.DrawArrow(
+                        drawList,
+                        this.ConvertDrawPoint(canvasBottomRight, edge.Curve.End),
+                        this.ConvertDrawPoint(canvasBottomRight, edge.EdgeGeometry.TargetArrowhead.TipPosition)
+                    );
+                }
 
-                    foreach (var nodeId in node.PreviousQuestsId)
-                    {
-                        var prevNode = this.questsManager.QuestData[nodeId];
-                        if (cancel.IsCancellationRequested)
-                        {
-                            return;
-                        }
-
-                        if (prevNode.RowId == 69602)
-                        {
-                            Plugin.Log.Info($"BBBBBBB > {prevNode.PreviousQuestsId.Count} - {node.Name}");
-                        }
-
-                        AddNode(prevNode);
-                        //if (prevNode.PreviousQuestsId.Count > 0 && !this.IsMSQ(prevNode))
-                        if (prevNode.PreviousQuestsId.Count > 0)
-                        {
-                            AddPrev(prevNode);
-                        }
-                    }
+                if (edge.ArrowheadAtSource)
+                {
+                    this.DrawArrow(
+                        drawList,
+                        this.ConvertDrawPoint(canvasBottomRight, edge.Curve.Start),
+                        this.ConvertDrawPoint(canvasBottomRight, edge.EdgeGeometry.SourceArrowhead.TipPosition)
+                    );
                 }
             }
-
-            AddNode(questData);
-            AddNext(questData);
-
-            //var compressedMsq = this.CompressMSQ(questData);
-            //if (compressedMsq != null)
-            {
-                //AddGraphNode(compressedMsq);
-            }
-            //else
-            {
-                //AddPrev(questData);
-            }
-
-            if (cancel.IsCancellationRequested)
-            {
-                return (null, null);
-            }
-
-            foreach (var (sourceId, targetId) in links)
-            {
-                try
-                {
-                    if (cancel.IsCancellationRequested)
-                    {
-                        return (null, null);
-                    }
-
-                    if (!msaglNodes.TryGetValue(sourceId, out var source) || !msaglNodes.TryGetValue(targetId, out var target))
-                    {
-                        continue;
-                    }
-
-                    var edge = new Edge(source, target);
-                    //if (this.Plugin.Config.ShowArrowheads)
-                    {
-                        edge.EdgeGeometry = new EdgeGeometry
-                        {
-                            TargetArrowhead = new Arrowhead(),
-                        };
-                    }
-
-                    g.Edges.Add(edge);
-                }
-                catch (Exception ex)
-                {
-                    Plugin.Log.Error(ex, "ERROR Links");
-                }
-            }
-
-            LayoutHelpers.CalculateLayout(g, this.LayoutSettings, null);
-
-            Node? centre = null;
-            if (g.Nodes.Count > 0)
-            {
-                centre = g.Nodes[0];
-            }
-
-            return cancel.IsCancellationRequested
-                ? (null, null)
-                : (g, centre);
         }
 
-        private GraphNode? CompressMSQ(QuestData questData)
+        private List<(Vector2, Vector2, uint)> DrawNodes(ImDrawListPtr drawList, IList<Node> nodes, Vector2 canvasTopLeft, Vector2 canvasBottomRight)
         {
-            var msqEndQuestName = questData.RowId switch
+            var drawn = new List<(Vector2, Vector2, uint)>();
+            foreach (var node in nodes)
             {
-                70058 => "A Realm Reborn (2.0)",
-                66729 => "A Realm Awoken (2.1)",
-                66899 => "Through the Maelstrom (2.2)",
-                66996 => "Defenders of Eorzea (2.3)",
-                65625 => "Dreams of Ice (2.4)",
-                65965 => "Before the Fall - Part 1 (2.5)",
-                65964 => "Before the Fall - Part 2 (2.55)",
-                67205 => "Heavensward (3.0)",
-                67699 => "As Goes Light, So Goes Darkness (3.1)",
-                67777 => "The Gears of Change (3.2)",
-                67783 => "Revenge of the Horde (3.3)",
-                67886 => "Soul Surrender (3.4)",
-                67891 => "The Far Edge of Fate - Part 1 (3.5)",
-                67895 => "The Far Edge of Fate - Part 2 (3.56)",
-                68089 => "Stormblood (4.0)",
-                68508 => "The Legend Returns (4.1)",
-                68565 => "Rise of a New Sun (4.2)",
-                68612 => "Under the Moonlight (4.3)",
-                68685 => "Prelude in Violet (4.4)",
-                68719 => "A Requiem for Heroes - Part 1 (4.5)",
-                68721 => "A Requiem for Heroes - Part 2 (4.56)",
-                69190 => "Shadowbringers (5.0)",
-                69218 => "Vows of Virtue, Deeds of Cruelty (5.1)",
-                69306 => "Echoes of a Fallen Star (5.2)",
-                69318 => "Reflections in Crystal (5.3)",
-                69552 => "Futures Rewritten (5.4)",
-                69599 => "Death Unto Dawn - Part 1 (5.5)",
-                69602 => "Death Unto Dawn - Part 2 (5.55)",
-                70000 => "Endwalker (6.0)",
-                70062 => "Newfound Adventure (6.1)",
-                70136 => "Buried Memory (6.2)",
-                70214 => "Gods Revel, Lands Tremble (6.3)",
-                70279 => "The Dark Throne (6.4)",
-                70286 => "Growing Light (6.5)",
-                70289 => "The Coming Dawn (6.55)",
-                70495 => "Dawntrail (7.0)",
-                70786 => "Crossroads (7.1)",
-                70842 => "Seekers of Eternity (7.2)",
-                _ => null,
-            };
+                var graphNode = node.UserData as NodeData;
+                var topLeft = node.GetTopLeft(this.dragOffset);
+                var start = canvasBottomRight - (node.GetTopLeft(this.dragOffset) * this.zoomLevel);
 
-            if (msqEndQuestName != null)
-            {
-                return new GraphNode(msqEndQuestName);
+                if (this.IsHidden(canvasTopLeft, canvasBottomRight, node, start) ||
+                    graphNode is null)
+                {
+                    continue;
+                }
+
+                var backgroundColor = this.config.Colors.GraphDefaultBackgroundColor;
+                var textColour = Colors.Text;
+
+                if (graphNode?.QuestData != null)
+                {
+                    backgroundColor = graphNode.QuestData.QuestType switch
+                    {
+                        Enums.QuestTypes.Normal => this.config.Colors.GraphDefaultBackgroundColor,
+                        Enums.QuestTypes.MSQ => this.config.Colors.GraphMSQBackgroundColor,
+                        Enums.QuestTypes.Blue => this.config.Colors.GraphBlueBackgroundColor,
+                        _ => this.config.Colors.GraphDefaultBackgroundColor,
+                    };
+
+                    if (QuestManager.IsQuestComplete(graphNode.QuestData.RowId))
+                    {
+                        backgroundColor.W = .5f;
+                        textColour = (uint)((0x80 << 24) | (textColour & 0xFFFFFF));
+                    }
+                }
+
+                var end = canvasBottomRight - (node.GetBottomRight(this.dragOffset) * this.zoomLevel);
+
+                drawn.Add((start, end, graphNode!.Id));
+                if (this.SelectedQuest is not null && graphNode.Id == this.SelectedQuest.RowId)
+                {
+                    drawList.AddRect(start - Vector2.One, end + Vector2.One, Colors.Border, 5, ImDrawFlags.RoundCornersAll);
+                }
+
+                drawList.AddRectFilled(start, end, ImGui.GetColorU32(backgroundColor), 5, ImDrawFlags.RoundCornersAll);
+                var font = ImGui.GetFont();
+                drawList.AddText(font, font.FontSize * this.zoomLevel, start + GraphUtils.TextOffset, textColour, graphNode.Text);
             }
 
-            return null;
+            return drawn;
         }
+
+        private void DrawGrid(ImDrawListPtr drawList, Vector2 size, Vector2 canvasTopLeft, Vector2 canvasBottomRight)
+        {
+            size /= (float)Math.Pow(this.zoomLevel, GridZoomMultiplier);
+
+            // Vertical
+            for (var i = 0; i < size.X / GridSmall; i++)
+            {
+                this.DrawGridLine(drawList, canvasTopLeft, canvasBottomRight, i * GridSmall, true, Colors.Grid, GridSmallThickness);
+            }
+
+            // Horizontal
+            for (var i = 0; i < size.Y / GridSmall; i++)
+            {
+                this.DrawGridLine(drawList, canvasTopLeft, canvasBottomRight, i * GridSmall, false, Colors.Grid, GridSmallThickness);
+            }
+
+            // Vertical
+            for (var i = 0; i < size.X / GridLarge; i++)
+            {
+                this.DrawGridLine(drawList, canvasTopLeft, canvasBottomRight, i * GridLarge, true, Colors.Grid, GridLargeThickness);
+            }
+
+            // Horizontal
+            for (var i = 0; i < size.Y / GridLarge; i++)
+            {
+                this.DrawGridLine(drawList, canvasTopLeft, canvasBottomRight, i * GridLarge, true, Colors.Grid, GridLargeThickness);
+            }
+        }
+
+        private void DrawGridLine(ImDrawListPtr drawList, Vector2 canvasTopLeft, Vector2 canvasBottomRight, int linePadding, bool isVertical, uint color, float thickness)
+        {
+            if (isVertical)
+            {
+                drawList.AddLine(new Vector2(canvasTopLeft.X + (linePadding * this.zoomLevel), canvasTopLeft.Y),
+                    new Vector2(canvasTopLeft.X + (linePadding * this.zoomLevel), canvasBottomRight.Y), color, thickness);
+            }
+            else
+            {
+                drawList.AddLine(new Vector2(canvasTopLeft.X, canvasTopLeft.Y + (linePadding * this.zoomLevel)),
+                    new Vector2(canvasBottomRight.X, canvasTopLeft.Y + (linePadding * this.zoomLevel)), color, thickness);
+            }
+        }
+
+        private Vector2 ConvertDrawPoint(Vector2 canvasBottomRight, Point p)
+            => canvasBottomRight - ((p.ToVector2() + this.dragOffset) * this.zoomLevel);
+
+        private void DrawArrow(ImDrawListPtr drawList, Vector2 start, Vector2 end)
+        {
+            const float arrowAngle = 30f;
+            var dir = end - start;
+            var h = dir;
+            dir /= dir.Length();
+
+            var s = new Vector2(-dir.Y, dir.X);
+            s *= (float)(h.Length() * Math.Tan(arrowAngle * 0.5f * (Math.PI / 180f)));
+
+            drawList.AddTriangleFilled(
+                start + s,
+                end,
+                start - s,
+                Colors.Line
+            );
+        }
+
+        private bool IsHidden(Vector2 canvasTopLeft, Vector2 canvasBottomRight, GeometryObject node, Vector2 start)
+        {
+            var width = (float)node.BoundingBox.Width;
+            var height = (float)node.BoundingBox.Height;
+            return start.X + width < canvasTopLeft.X
+                   || start.Y + height < canvasTopLeft.Y
+                   || start.X > canvasBottomRight.X
+                   || start.Y > canvasBottomRight.Y;
+        }
+
     }
 }
