@@ -18,9 +18,7 @@ namespace QuestoGraph.Windows
             General,
             Filter,
             Colors,
-#if DEBUG
             Graph,
-#endif
             About,
         }
 
@@ -184,13 +182,22 @@ namespace QuestoGraph.Windows
             {
                 indent.Push(1);
                 this.config.Colors.SidebarDefaultColor = this.ColorEdit("Default Quest", "DefaultQuest", this.config.Colors.SidebarDefaultColor, this.backupConfig.Colors.SidebarDefaultColor);
-                this.config.Colors.SidebarCompletedColor = this.ColorEdit("Completed Quest", "DoneQuest", this.config.Colors.SidebarCompletedColor, this.backupConfig.Colors.SidebarCompletedColor);
+                //this.config.Colors.SidebarCompletedColor = this.ColorEdit("Completed Quest", "DoneQuest", this.config.Colors.SidebarCompletedColor, this.backupConfig.Colors.SidebarCompletedColor);
 
                 this.config.Colors.SidebarMSQColor = this.ColorEdit("MSQ Quest", "MSQQuest", this.config.Colors.SidebarMSQColor, this.backupConfig.Colors.SidebarMSQColor);
-                this.config.Colors.SidebarMSQCompletedColor = this.ColorEdit("Completed MSQ Quest", "DoneMSQQuest", this.config.Colors.SidebarMSQCompletedColor, this.backupConfig.Colors.SidebarMSQCompletedColor);
+                //this.config.Colors.SidebarMSQCompletedColor = this.ColorEdit("Completed MSQ Quest", "DoneMSQQuest", this.config.Colors.SidebarMSQCompletedColor, this.backupConfig.Colors.SidebarMSQCompletedColor);
 
                 this.config.Colors.SidebarBlueColor = this.ColorEdit("Blue Quest", "BlueQuest", this.config.Colors.SidebarBlueColor, this.backupConfig.Colors.SidebarBlueColor);
-                this.config.Colors.SidebarBlueCompletedColor = this.ColorEdit("Completed Blue Quest", "DoneBlueQuest", this.config.Colors.SidebarBlueCompletedColor, this.backupConfig.Colors.SidebarBlueCompletedColor);
+                //this.config.Colors.SidebarBlueCompletedColor = this.ColorEdit("Completed Blue Quest", "DoneBlueQuest", this.config.Colors.SidebarBlueCompletedColor, this.backupConfig.Colors.SidebarBlueCompletedColor);
+            }
+
+            ImGuiUtils.SeperatorWithText("Graph");
+            using (var indent = new ImRaii.Indent())
+            {
+                indent.Push(1);
+                this.config.Colors.GraphDefaultBackgroundColor = this.ColorEdit("Default", "GraphDefault", this.config.Colors.GraphDefaultBackgroundColor, this.backupConfig.Colors.GraphDefaultBackgroundColor);
+                this.config.Colors.GraphMSQBackgroundColor = this.ColorEdit("MSQ Quest", "GraphMSQ", this.config.Colors.GraphMSQBackgroundColor, this.backupConfig.Colors.GraphMSQBackgroundColor);
+                this.config.Colors.GraphBlueBackgroundColor = this.ColorEdit("Blue Quest", "GraphBlue", this.config.Colors.GraphBlueBackgroundColor, this.backupConfig.Colors.GraphBlueBackgroundColor);
             }
         }
 
@@ -255,19 +262,19 @@ namespace QuestoGraph.Windows
             return items[selectedIndex];
         }
 
-        private Vector4 ColorEdit(string text, string resetButtonSuffix, Vector4 color, Vector4 reset)
+        private Vector4 ColorEdit(string text, string suffix, Vector4 color, Vector4 reset)
         {
             const string resetButtonText = "Reset";
 
             var temp = color;
-            if (ImGui.ColorEdit4(text, ref temp, ImGuiColorEditFlags.NoInputs))
+            if (ImGui.ColorEdit4($"{text}##{suffix}", ref temp, ImGuiColorEditFlags.NoInputs))
             {
                 return temp;
             }
 
             ImGui.SameLine();
             ImGui.SetCursorPosX(ImGui.GetContentRegionMax().X - ImGui.CalcTextSize(resetButtonText).X - 10);
-            if (ImGui.Button($"{resetButtonText}##{resetButtonSuffix}"))
+            if (ImGui.Button($"{resetButtonText}##{suffix}"))
             {
                 return reset;
             }
