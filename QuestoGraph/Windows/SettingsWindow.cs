@@ -26,15 +26,20 @@ namespace QuestoGraph.Windows
         private readonly Config backupConfig = new();
         private readonly Version assemblyVersion = Assembly.GetExecutingAssembly()?.GetName()?.Version ?? new Version(0, 0);
         private readonly QuestsManager questsManager;
+        private readonly UIManager uiManager;
 
         private Options selectedOption = Options.General;
-        private ClientLanguage originalLanguage = ClientLanguage.English;
+        private bool needGraphRedrawn = false;
+        private bool oldShowArrowheads = true;
+        private bool oldCompressMSQ = true;
+        private ClientLanguage oldLanguage = ClientLanguage.English;
 
-        public SettingsWindow(Config config, QuestsManager questsManager)
+        public SettingsWindow(Config config, QuestsManager questsManager, UIManager uiManager)
             : base($"{Plugin.Name} - Settings##Settings", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoResize)
         {
             this.config = config;
             this.questsManager = questsManager;
+            this.uiManager = uiManager;
 
             var windowSize = new Vector2(375, 310);
             this.SizeConstraints = new WindowSizeConstraints
@@ -48,8 +53,10 @@ namespace QuestoGraph.Windows
         {
             base.OnOpen();
 
-            this.originalLanguage = this.config.General.Language;
-            Plugin.Log.Debug($"Org Language: {this.originalLanguage}");
+            this.oldLanguage = this.config.General.Language;
+            this.oldShowArrowheads = this.config.Graph.ShowArrowheads;
+            this.oldCompressMSQ = this.config.Graph.CompressMSQ;
+            Plugin.Log.Debug($"Org Language: {this.oldLanguage}");
         }
 
         public override void OnClose()
@@ -59,13 +66,19 @@ namespace QuestoGraph.Windows
             Plugin.Log.Info("Saving configuration");
             Plugin.Interface.SavePluginConfig(this.config);
 
-            if (this.config.General.Language != this.originalLanguage)
+            if (this.config.General.Language != this.oldLanguage)
             {
                 this.questsManager.ReInitialize();
             }
             else
             {
                 this.questsManager.RefreshList();
+            }
+
+            if (this.config.Graph.ShowArrowheads != this.oldShowArrowheads ||
+                this.config.Graph.CompressMSQ != this.oldCompressMSQ)
+            {
+                this.uiManager.RedrawGraph();
             }
         }
 

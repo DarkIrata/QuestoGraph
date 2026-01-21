@@ -46,6 +46,7 @@ namespace QuestoGraph.Windows
         private Vector2 lastDragPos;
         private QuestData? SelectedQuest;
         private QuestData? lastSelectedQuest;
+        private CancellationTokenSource? calcCancellationTokenSource = null;
 
         public GraphWindow(Config config, QuestsManager questsManager)
             : base($"{Plugin.Name} - Graph##GraphView", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
@@ -88,6 +89,9 @@ namespace QuestoGraph.Windows
             return calc;
         }
 
+        internal CancellationTokenSource? RedrawGraph()
+            => this.StartGraphRecalculation(this.SelectedQuest, true);
+
         public override void Draw()
         {
             if (this.SelectedQuest == null)
@@ -125,9 +129,7 @@ namespace QuestoGraph.Windows
             }
         }
 
-        private CancellationTokenSource? calcCancellationTokenSource = null;
-
-        internal CancellationTokenSource? StartGraphRecalculation(QuestData? quest)
+        internal CancellationTokenSource? StartGraphRecalculation(QuestData? quest, bool force = false)
         {
             if (this.calcCancellationTokenSource is not null)
             {
@@ -135,7 +137,7 @@ namespace QuestoGraph.Windows
                 this.calcCancellationTokenSource?.Cancel();
             }
 
-            if (this.lastSelectedQuest == quest)
+            if (this.lastSelectedQuest == quest && !force)
             {
                 return this.calcCancellationTokenSource;
             }
@@ -153,7 +155,7 @@ namespace QuestoGraph.Windows
                 Plugin.Log.Info("Starting Graph Calculation");
                 sw.Start();
 
-                var info = GraphUtils.GetGraphInfo(quest, this.questsManager, this.config, calcCancellationTokenSource.Token);
+                var info = GraphUtils.GetGraphInfo(quest, this.questsManager, this.config, calcCancellationTokenSource.Token, sw);
 
                 this.zoomLevel = 1f;
                 this.dragOffset = Vector2.Zero;
@@ -164,6 +166,7 @@ namespace QuestoGraph.Windows
                 this.lastSelectedQuest = this.SelectedQuest;
                 sw.Stop();
                 Plugin.Log.Info($"Graph Finished ({sw.Elapsed})");
+                this.calcCancellationTokenSource = null;
             }, this.calcCancellationTokenSource.Token);
 
             return this.calcCancellationTokenSource;
@@ -320,7 +323,7 @@ namespace QuestoGraph.Windows
                                 this.ConvertDrawPoint(canvasBottomRight, cs.B(2)),
                                 this.ConvertDrawPoint(canvasBottomRight, cs.B(3)),
                                 Colors.Line,
-                                3.0f
+                                3.0f * this.zoomLevel
                             );
                         }
                     }
@@ -474,6 +477,5 @@ namespace QuestoGraph.Windows
                    || start.X > canvasBottomRight.X
                    || start.Y > canvasBottomRight.Y;
         }
-
     }
 }

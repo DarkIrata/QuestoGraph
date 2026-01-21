@@ -21,7 +21,7 @@ namespace QuestoGraph.Manager
             this.questsManager = questsManager;
 
             this.mainWindow = new MainWindow(this.config, this.questsManager, this);
-            this.settingsWindow = new SettingsWindow(this.config, this.questsManager);
+            this.settingsWindow = new SettingsWindow(this.config, this.questsManager, this);
             this.graphWindow = new GraphWindow(this.config, this.questsManager);
             this.WindowSystem.AddWindow(this.mainWindow);
             this.WindowSystem.AddWindow(this.settingsWindow);
@@ -82,5 +82,10 @@ namespace QuestoGraph.Manager
         public void ToggleGraph() => this.graphWindow.Toggle();
 
         public void ShowGraph(QuestData questData) => this.graphWindow.Show(questData);
+
+        internal void RedrawGraph()
+        {
+            this.graphWindow.RedrawGraph();
+        }
     }
 }
