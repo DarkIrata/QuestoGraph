@@ -18,17 +18,17 @@ namespace QuestoGraph.Windows
     {
         private readonly Config config;
         private readonly QuestsManager questsManager;
-        private readonly WindowSystem windowSystem;
+        private readonly UIManager uiManager;
 
         private string filter = string.Empty;
         private QuestData? selectedQuestData = null;
 
-        public MainWindow(Config config, QuestsManager questsManager, WindowSystem windowSystem)
+        public MainWindow(Config config, QuestsManager questsManager, UIManager uiManager)
             : base($"{Plugin.Name} - Overview##Main View", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
         {
             this.config = config;
             this.questsManager = questsManager;
-            this.windowSystem = windowSystem;
+            this.uiManager = uiManager;
 
             this.SizeConstraints = new WindowSizeConstraints
             {
@@ -106,8 +106,7 @@ namespace QuestoGraph.Windows
                         freePos.SetX(availableSize.X - (buttonSize / 2) - 4f);
                         if (ImGui.Button($"{FontAwesomeIcon.Cog.ToIconString()}##Settings", new Vector2(buttonSize, buttonSize)))
                         {
-                            var settingsWindow = this.windowSystem.Windows.FirstOrDefault(w => w is SettingsWindow);
-                            settingsWindow?.Toggle();
+                            this.uiManager.ToggleSettings();
                         }
                     }
                     ImGuiUtils.Tooltip("Open Settings");
@@ -425,6 +424,20 @@ namespace QuestoGraph.Windows
             }
 
             ImGuiUtils.Tooltip("Try open in quest journal");
+
+            using (ImRaii.PushFont(UiBuilder.IconFont))
+            using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.Y))
+            {
+                const float buttonSize = 24f;
+                freePos.SetX(ImGui.GetContentRegionAvail().X - 8f - (buttonSize * 3));
+                freePos.SetY(freePos.LastPos.Y - ImGui.CalcTextSize(metaInfo).Y);
+                if (ImGui.Button($"{FontAwesomeIcon.ProjectDiagram.ToIconString()}##OpenGraph_" + questData.RowId, new Vector2(buttonSize, buttonSize)))
+                {
+                    this.uiManager.ShowGraph(questData);
+                }
+            }
+
+            ImGuiUtils.Tooltip("Open in Graph");
         }
 
         internal void Prefilter(string? args)

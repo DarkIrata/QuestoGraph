@@ -1,4 +1,5 @@
 ﻿using Dalamud.Interface.Windowing;
+using QuestoGraph.Data;
 using QuestoGraph.Data.Settings;
 using QuestoGraph.Windows;
 
@@ -19,7 +20,7 @@ namespace QuestoGraph.Manager
             this.config = config;
             this.questsManager = questsManager;
 
-            this.mainWindow = new MainWindow(this.config, this.questsManager, this.WindowSystem);
+            this.mainWindow = new MainWindow(this.config, this.questsManager, this);
             this.settingsWindow = new SettingsWindow(this.config, this.questsManager);
             this.graphWindow = new GraphWindow(this.config, this.questsManager);
             this.WindowSystem.AddWindow(this.mainWindow);
@@ -29,12 +30,6 @@ namespace QuestoGraph.Manager
             Plugin.Interface.UiBuilder.Draw += this.DrawUI;
             Plugin.Interface.UiBuilder.OpenMainUi += this.ToggleMain;
             Plugin.Interface.UiBuilder.OpenConfigUi += this.ToggleSettings;
-
-#if DEBUG
-            //this.ToggleMain();
-            //this.ToggleSettings();
-            //this.ToggleDebug();
-#endif
         }
 
         public void Dispose()
@@ -84,6 +79,8 @@ namespace QuestoGraph.Manager
 
         public void ToggleSettings() => this.settingsWindow.Toggle();
 
-        public void ToggleDebug() => this.graphWindow.Toggle();
+        public void ToggleGraph() => this.graphWindow.Toggle();
+
+        public void ShowGraph(QuestData questData) => this.graphWindow.Show(questData);
     }
 }

@@ -29,7 +29,7 @@ namespace QuestoGraph.Windows
         private const float GridSmallThickness = 1f;
         private const float GridLargeThickness = 2f;
         private const float GridZoomMultiplier = 1f;
-        private const float ZoomLevelModifier = 0.125f;
+        private const float ZoomLevelModifier = 0.055f;
         private const float MinZoomLevel = 0.125f;
         private const float MaxZoomLevel = 2f;
 
@@ -40,12 +40,12 @@ namespace QuestoGraph.Windows
 
         private Node? CenterNode { get; set; }
 
-        private bool redrawLayout = true;
         private Vector2 dragOffset = Vector2.Zero;
         private float zoomLevel = 1f;
         private bool viewDrag;
         private Vector2 lastDragPos;
         private QuestData? SelectedQuest;
+        private QuestData? lastSelectedQuest;
 
         public GraphWindow(Config config, QuestsManager questsManager)
             : base($"{Plugin.Name} - Graph##GraphView", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
@@ -64,17 +64,28 @@ namespace QuestoGraph.Windows
         {
             base.OnOpen();
 
-            this.SelectedQuest = this.questsManager.QuestData.FirstOrDefault(qd => qd.Value.Name.Contains("A Burst of Inspiration")).Value;
-            Plugin.Log.Warning((this.SelectedQuest == null) + " - IS SELECTED QUEST NULL ");
-            if (this.redrawLayout)
+            if (this.SelectedQuest == null)
             {
-                this.StartGraphRecalculation(this.SelectedQuest);
-                this.redrawLayout = false;
+                Plugin.Log.Warning("No Quest was selected..");
             }
         }
 
         public void Dispose()
         {
+        }
+
+        public CancellationTokenSource? Show(QuestData questData)
+        {
+            this.SelectedQuest = questData;
+            Plugin.Log.Info($"Showing Graph for '{questData.Name}'");
+
+            var calc = this.StartGraphRecalculation(this.SelectedQuest);
+            if (!this.IsOpen)
+            {
+                this.Toggle();
+            }
+
+            return calc;
         }
 
         public override void Draw()
@@ -114,28 +125,48 @@ namespace QuestoGraph.Windows
             }
         }
 
-        internal CancellationTokenSource StartGraphRecalculation(QuestData? quest)
-        {
-            var cts = new CancellationTokenSource();
+        private CancellationTokenSource? calcCancellationTokenSource = null;
 
-            if (quest == null)
+        internal CancellationTokenSource? StartGraphRecalculation(QuestData? quest)
+        {
+            if (this.calcCancellationTokenSource is not null)
             {
-                return cts;
+                Plugin.Log.Info("Cancelling Graph Calculation");
+                this.calcCancellationTokenSource?.Cancel();
             }
 
+            if (this.lastSelectedQuest == quest)
+            {
+                return this.calcCancellationTokenSource;
+            }
+
+            this.calcCancellationTokenSource = new CancellationTokenSource();
+            if (quest == null)
+            {
+                return this.calcCancellationTokenSource;
+            }
+
+            this.Graph = null;
             Task.Run(() =>
             {
                 var sw = new Stopwatch();
-                Plugin.Log.Debug($"Starting Graph");
+                Plugin.Log.Info("Starting Graph Calculation");
                 sw.Start();
-                var info = GraphUtils.GetGraphInfo(quest, this.questsManager, this.config, cts.Token);
+
+                var info = GraphUtils.GetGraphInfo(quest, this.questsManager, this.config, calcCancellationTokenSource.Token);
+
+                this.zoomLevel = 1f;
+                this.dragOffset = Vector2.Zero;
+
                 this.Graph = info.FinishedGraph;
                 this.CenterNode = info.CenterNode;
-                sw.Stop();
-                Plugin.Log.Debug($"Graph Finished ({sw.Elapsed})");
-            }, cts.Token);
 
-            return cts;
+                this.lastSelectedQuest = this.SelectedQuest;
+                sw.Stop();
+                Plugin.Log.Info($"Graph Finished ({sw.Elapsed})");
+            }, this.calcCancellationTokenSource.Token);
+
+            return this.calcCancellationTokenSource;
         }
 
         private void DrawGraph(GeometryGraph graph)
@@ -165,7 +196,7 @@ namespace QuestoGraph.Windows
             // Background Grid
             this.DrawGrid(drawList, size, canvasTopLeft, canvasBottomRight);
 
-            // Border
+            // Graph Border
             drawList.AddRect(canvasTopLeft, canvasBottomRight, Colors.Border);
 
             // Content
@@ -201,7 +232,7 @@ namespace QuestoGraph.Windows
                 if (!this.viewDrag)
                 {
                     var io = ImGui.GetIO();
-                    if (io.MouseWheel != 0)
+                    if (ImGui.IsWindowFocused() && io.MouseWheel != 0)
                     {
                         if (io.MouseWheel < 0 && this.zoomLevel > MinZoomLevel)
                         {
@@ -359,7 +390,7 @@ namespace QuestoGraph.Windows
                 drawn.Add((start, end, graphNode!.Id));
                 if (this.SelectedQuest is not null && graphNode.Id == this.SelectedQuest.RowId)
                 {
-                    drawList.AddRect(start - Vector2.One, end + Vector2.One, Colors.Border, 5, ImDrawFlags.RoundCornersAll);
+                    drawList.AddRect(start - Vector2.One, end + Vector2.One, Colors.Border, 5, ImDrawFlags.RoundCornersAll, 3.5f);
                 }
 
                 drawList.AddRectFilled(start, end, ImGui.GetColorU32(backgroundColor), 5, ImDrawFlags.RoundCornersAll);

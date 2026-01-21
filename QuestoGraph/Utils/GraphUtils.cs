@@ -38,7 +38,6 @@ namespace QuestoGraph.Utils
             try
             {
                 var data = (NodeData)node.UserData;
-
                 if (msaglNodes.ContainsKey(data.Id))
                 {
                     return;
@@ -159,17 +158,17 @@ namespace QuestoGraph.Utils
                 return (null, null);
             }
 
-            Plugin.Log.Debug($"Graph for target: {questData.Name}");
+            Plugin.Log.Debug($"Graph for target '{questData.Name}'");
 
             var msaglNodes = new Dictionary<uint, Node>();
             var links = new List<(uint Source, uint Target)>();
-            var g = new GeometryGraph();
+            var graph = new GeometryGraph();
 
             var newNode = GraphUtils.GetNode(new NodeData(questData));
-            AddNode(msaglNodes, links, g, newNode);
+            AddNode(msaglNodes, links, graph, newNode);
 
-            AddNextSubNodes(msaglNodes, links, g, newNode, questsManager, cancel);
-            AddPreviousSubNodes(msaglNodes, links, g, newNode, config, questsManager, cancel);
+            AddNextSubNodes(msaglNodes, links, graph, newNode, questsManager, cancel);
+            AddPreviousSubNodes(msaglNodes, links, graph, newNode, config, questsManager, cancel);
 
             foreach (var (sourceId, targetId) in links)
             {
@@ -195,7 +194,7 @@ namespace QuestoGraph.Utils
                         };
                     }
 
-                    g.Edges.Add(edge);
+                    graph.Edges.Add(edge);
                 }
                 catch (Exception ex)
                 {
@@ -208,17 +207,17 @@ namespace QuestoGraph.Utils
                 return (null, null);
             }
 
-            LayoutHelpers.CalculateLayout(g, LayoutSettings, null);
+            LayoutHelpers.CalculateLayout(graph, LayoutSettings, null);
 
             Node? centre = null;
-            if (g.Nodes.Count > 0)
+            if (newNode != null)
             {
-                centre = g.Nodes[0];
+                centre = newNode;
             }
 
             return cancel.IsCancellationRequested
                 ? (null, null)
-                : (g, centre);
+                : (graph, centre);
         }
 
         private static (uint QuestId, string? CompressedName) GetCompressMSQ(QuestData? questData)
