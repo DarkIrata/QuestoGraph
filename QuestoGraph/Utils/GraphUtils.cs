@@ -3,18 +3,13 @@ using Dalamud.Bindings.ImGui;
 using Microsoft.Msagl.Core.Geometry;
 using Microsoft.Msagl.Core.Geometry.Curves;
 using Microsoft.Msagl.Core.Layout;
-using Microsoft.Msagl.Layout.Layered;
-using Microsoft.Msagl.Miscellaneous;
 using QuestoGraph.Data;
-using QuestoGraph.Data.Settings;
-using QuestoGraph.Manager;
+using QuestoGraph.Data.Graph;
 
 namespace QuestoGraph.Utils
 {
     internal static class GraphUtils
     {
-        private static readonly LayoutAlgorithmSettings LayoutSettings = new SugiyamaLayoutSettings();
-
         internal static readonly Vector2 TextOffset = new(5, 2);
 
         internal static Vector2 ToVector2(this Point p)
@@ -33,194 +28,7 @@ namespace QuestoGraph.Utils
             return new Node(CurveFactory.CreateRectangle(dims.X, dims.Y, new Point()), nodeData);
         }
 
-        internal static void AddNode(Dictionary<uint, Node> msaglNodes, GeometryGraph g, Node node)
-        {
-            try
-            {
-                var data = (NodeData)node.UserData;
-                if (msaglNodes.ContainsKey(data.Id))
-                {
-                    return;
-                }
-
-                g.Nodes.Add(node);
-                msaglNodes[data.Id] = node;
-            }
-            catch (Exception ex)
-            {
-                Plugin.Log.Error(ex, $"Failed {nameof(AddNode)}");
-            }
-        }
-
-        internal static void AddNode(Dictionary<uint, Node> msaglNodes, List<(uint Source, uint Target)> links, GeometryGraph g, Node node)
-        {
-            try
-            {
-                var data = (NodeData)node.UserData;
-
-                if (msaglNodes.ContainsKey(data.Id))
-                {
-                    return;
-                }
-
-                AddNode(msaglNodes, g, node);
-                if (data.QuestData is QuestData questData)
-                {
-                    foreach (var parentId in questData.PreviousQuestsId)
-                    {
-                        links.Add((parentId, questData.RowId));
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Plugin.Log.Error(ex, $"Failed {nameof(AddNode)}");
-            }
-        }
-
-        internal static void AddNextSubNodes(
-            Dictionary<uint, Node> msaglNodes,
-            List<(uint Source, uint Target)> links,
-            GeometryGraph g,
-            Node node,
-            QuestsManager questsManager,
-            CancellationToken cancel)
-        {
-            if (node != null && node.UserData is NodeData nodeData && nodeData.QuestData is QuestData questData)
-            {
-                foreach (var nodeId in questData.NextQuestIds.Reverse())
-                {
-                    var nextQuestData = questsManager.QuestData[nodeId];
-                    if (cancel.IsCancellationRequested)
-                    {
-                        return;
-                    }
-
-                    var newSubNode = GetNode(new NodeData(nextQuestData));
-                    AddNode(msaglNodes, links, g, newSubNode);
-
-                    if (nextQuestData.PreviousQuestsId.Count > 0)
-                    {
-                        AddNextSubNodes(msaglNodes, links, g, newSubNode, questsManager, cancel);
-                    }
-                }
-            }
-        }
-
-        internal static void AddPreviousSubNodes(
-            Dictionary<uint, Node> msaglNodes,
-            List<(uint Source, uint Target)> links,
-            GeometryGraph g,
-            Node node,
-            Config config,
-            QuestsManager questsManager,
-            CancellationToken cancel)
-        {
-            if (node != null && node.UserData is NodeData nodeData && nodeData.QuestData is QuestData questData)
-            {
-                foreach (var nodeId in questData.PreviousQuestsId.Reverse())
-                {
-                    var prevQuestData = questsManager.QuestData[nodeId];
-                    if (cancel.IsCancellationRequested)
-                    {
-                        return;
-                    }
-
-                    if (config.Graph.CompressMSQ)
-                    {
-                        var result = GetCompressMSQ(prevQuestData);
-                        if (!string.IsNullOrEmpty(result.CompressedName))
-                        {
-                            var compressedMSQNode = GetNode(new NodeData(nodeId, result.CompressedName));
-                            AddNode(msaglNodes, links, g, compressedMSQNode);
-                            continue;
-                        }
-                    }
-
-                    var newPrevSubNode = GetNode(new NodeData(prevQuestData));
-                    AddNode(msaglNodes, links, g, newPrevSubNode);
-                    if (prevQuestData.PreviousQuestsId.Count > 0)
-                    {
-                        AddPreviousSubNodes(msaglNodes, links, g, newPrevSubNode, config, questsManager, cancel);
-                    }
-                }
-            }
-        }
-
-        internal static (GeometryGraph? FinishedGraph, Node? CenterNode) GetGraphInfo(
-            QuestData questData,
-            QuestsManager questsManager,
-            Config config,
-            CancellationToken cancel)
-        {
-            if (questData == null)
-            {
-                return (null, null);
-            }
-
-            Plugin.Log.Debug($"Graph for target '{questData.Name}'");
-
-            var msaglNodes = new Dictionary<uint, Node>();
-            var links = new List<(uint Source, uint Target)>();
-            var graph = new GeometryGraph();
-
-            var newNode = GraphUtils.GetNode(new NodeData(questData));
-            AddNode(msaglNodes, links, graph, newNode);
-
-            AddNextSubNodes(msaglNodes, links, graph, newNode, questsManager, cancel);
-            AddPreviousSubNodes(msaglNodes, links, graph, newNode, config, questsManager, cancel);
-
-            foreach (var (sourceId, targetId) in links)
-            {
-                try
-                {
-                    if (cancel.IsCancellationRequested)
-                    {
-                        break;
-                    }
-
-                    if (!msaglNodes.TryGetValue(sourceId, out var source) ||
-                        !msaglNodes.TryGetValue(targetId, out var target))
-                    {
-                        continue;
-                    }
-
-                    var edge = new Edge(source, target);
-                    if (config.Graph.ShowArrowheads)
-                    {
-                        edge.EdgeGeometry = new EdgeGeometry
-                        {
-                            TargetArrowhead = new Arrowhead(),
-                        };
-                    }
-
-                    graph.Edges.Add(edge);
-                }
-                catch (Exception ex)
-                {
-                    Plugin.Log.Error(ex, $"Failed to link {sourceId} to {targetId}");
-                }
-            }
-
-            if (cancel.IsCancellationRequested)
-            {
-                return (null, null);
-            }
-
-            LayoutHelpers.CalculateLayout(graph, LayoutSettings, null);
-
-            Node? centre = null;
-            if (newNode != null)
-            {
-                centre = newNode;
-            }
-
-            return cancel.IsCancellationRequested
-                ? (null, null)
-                : (graph, centre);
-        }
-
-        private static (uint QuestId, string? CompressedName) GetCompressMSQ(QuestData? questData)
+        internal static (uint QuestId, string? CompressedName) GetCompressMSQ(QuestData? questData)
         {
             if (questData == null)
             {

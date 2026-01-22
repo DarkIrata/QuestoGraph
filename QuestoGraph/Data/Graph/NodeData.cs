@@ -1,10 +1,14 @@
-﻿namespace QuestoGraph.Data
+﻿namespace QuestoGraph.Data.Graph
 {
     internal class NodeData
     {
         public uint Id { get; set; } = 0;
 
         public string Text { get; set; }
+
+        public List<uint> PreviousIds { get; set; } = [];
+
+        public List<uint> NextIds { get; private set; } = [];
 
         public QuestData? QuestData { get; set; }
 
@@ -23,6 +27,8 @@
             : this(questData.RowId, questData.Name)
         {
             this.QuestData = questData;
+            this.PreviousIds = [.. this.QuestData.PreviousQuestsId];
+            this.NextIds = [.. this.QuestData.NextQuestIds];
         }
     }
 }

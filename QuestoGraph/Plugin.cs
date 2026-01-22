@@ -58,21 +58,11 @@ namespace QuestoGraph
             {
                 HelpMessage = $"Show Quests. {commandName} <Quest Name> to open prefiltered",
             });
-
-#if DEBUG
-            CommandManager.AddHandler("/qdebug", new CommandInfo((_, args) => this.uiManager.ToggleDebug())
-            {
-                HelpMessage = "Show debug Quests",
-            });
-#endif
         }
 
         public void Dispose()
         {
             CommandManager.RemoveHandler(commandName);
-#if DEBUG
-            CommandManager.RemoveHandler("/qdebug");
-#endif
         }
     }
 }

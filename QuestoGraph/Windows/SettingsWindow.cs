@@ -29,7 +29,6 @@ namespace QuestoGraph.Windows
         private readonly UIManager uiManager;
 
         private Options selectedOption = Options.General;
-        private bool needGraphRedrawn = false;
         private bool oldShowArrowheads = true;
         private bool oldCompressMSQ = true;
         private ClientLanguage oldLanguage = ClientLanguage.English;

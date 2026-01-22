@@ -7,6 +7,7 @@ using Microsoft.Msagl.Core.Geometry;
 using Microsoft.Msagl.Core.Geometry.Curves;
 using Microsoft.Msagl.Core.Layout;
 using QuestoGraph.Data;
+using QuestoGraph.Data.Graph;
 using QuestoGraph.Data.Settings;
 using QuestoGraph.Manager;
 using QuestoGraph.Utils;
@@ -35,6 +36,7 @@ namespace QuestoGraph.Windows
 
         private readonly Config config;
         private readonly QuestsManager questsManager;
+        private readonly GraphBuilder graphBuilder;
 
         private GeometryGraph? Graph { get; set; }
 
@@ -53,6 +55,7 @@ namespace QuestoGraph.Windows
         {
             this.config = config;
             this.questsManager = questsManager;
+            this.graphBuilder = new GraphBuilder();
 
             this.SizeConstraints = new WindowSizeConstraints
             {
@@ -69,6 +72,12 @@ namespace QuestoGraph.Windows
             {
                 Plugin.Log.Warning("No Quest was selected..");
             }
+        }
+
+        public override void OnClose()
+        {
+            base.OnClose();
+            this.calcCancellationTokenSource?.Cancel();
         }
 
         public void Dispose()
@@ -149,23 +158,25 @@ namespace QuestoGraph.Windows
             }
 
             this.Graph = null;
-            Task.Run(() =>
+            Task.Run(async () =>
             {
                 var sw = new Stopwatch();
-                Plugin.Log.Info("Starting Graph Calculation");
+                Plugin.Log.Info("Start Graph Recalculation");
                 sw.Start();
 
-                var info = GraphUtils.GetGraphInfo(quest, this.questsManager, this.config, calcCancellationTokenSource.Token, sw);
+                //var info = await GraphUtils.GetGraphInfo(quest, this.questsManager, this.config, calcCancellationTokenSource.Token, sw);
+                var graphData = this.graphBuilder.Build(this.questsManager, quest, this.config, calcCancellationTokenSource.Token, sw);
 
                 this.zoomLevel = 1f;
                 this.dragOffset = Vector2.Zero;
 
-                this.Graph = info.FinishedGraph;
-                this.CenterNode = info.CenterNode;
+                this.Graph = graphData?.Graph;
+                this.CenterNode = graphData?.CenterNode;
 
                 this.lastSelectedQuest = this.SelectedQuest;
                 sw.Stop();
-                Plugin.Log.Info($"Graph Finished ({sw.Elapsed})");
+
+                Plugin.Log.Info($"Recalculation finished ({sw.Elapsed})");
                 this.calcCancellationTokenSource = null;
             }, this.calcCancellationTokenSource.Token);
 
@@ -235,7 +246,9 @@ namespace QuestoGraph.Windows
                 if (!this.viewDrag)
                 {
                     var io = ImGui.GetIO();
-                    if (ImGui.IsWindowFocused() && io.MouseWheel != 0)
+                    if (ImGui.IsWindowFocused() &&
+                        ImGui.IsWindowHovered(ImGuiHoveredFlags.ChildWindows) &&
+                        io.MouseWheel != 0)
                     {
                         if (io.MouseWheel < 0 && this.zoomLevel > MinZoomLevel)
                         {

@@ -1,6 +1,6 @@
 ﻿namespace QuestoGraph.Enums
 {
-    internal enum QuestTypes
+    public enum QuestTypes
     {
         Normal = 0,
         MSQ = 1,
