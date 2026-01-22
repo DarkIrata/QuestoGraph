@@ -130,7 +130,7 @@ namespace QuestoGraph.Windows
         {
             ImGuiHelpers.CenteredText("•°*•._ Quest'o'Graph _.•*°•");
             ImGuiHelpers.CenteredText($"v{this.assemblyVersion}");
-            ImGuiHelpers.CenteredText("A (WIP) rewritten successor to QuestMap");
+            ImGuiHelpers.CenteredText("A (WIP) mostly rewritten successor to QuestMap");
             ImGuiHelpers.CenteredText("-.,_,.='``'-.,_,.-'``'=.,_,.-");
             ImGuiHelpers.ScaledDummy(1f, 5f);
             ImGuiHelpers.CenteredText("Bugs or Improvement? Submit it!");
@@ -138,6 +138,7 @@ namespace QuestoGraph.Windows
             ImGuiHelpers.ScaledDummy(1f, 8f);
             ImGui.TextUnformatted("SPECIAL THANKS");
             ImGui.BulletText("anna - QuestMap Creator");
+            ImGui.BulletText("Azure Gem - QuestMap Contributor");
             ImGui.BulletText("#?%$# - Plugin Icon");
             ImGui.BulletText("All the testers");
         }
