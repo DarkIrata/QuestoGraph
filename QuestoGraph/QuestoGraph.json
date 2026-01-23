@@ -1,10 +1,12 @@
 ﻿{
   "Author": "DarkIrata, Anna, Azure Gem",
   "Name": "Quest'o'Graph",
-  "Punchline": "Explore the quests and their rewards. QuestMap successor.",
+  "Punchline": "Explore quests and their rewards. QuestMap successor.",
   "RepoUrl": "https://github.com/DarkIrata/QuestoGraph",
-  "Description": "Quickly look through all the Quests of FFxiv and which rewards await you. This is a QuestMap successor.",
+  "Description": "Quickly look through all the Quests of FFXIV and their rewards. This Plugin is a QuestMap successor with more features.",
   "ApplicableVersion": "any",
+  "DalamudApiLevel": 14,
+  "TestingDalamudApiLevel": 14,
   "Tags": [
     "quest",
     "map",
@@ -12,5 +14,8 @@
     "questograph",
     "graph",
     "msq"
-  ]
+  ],
+  "IsTestingExclusive": false,
+  "IconUrl": "https://raw.githubusercontent.com/DarkIrata/QuestoGraph/main/Icon.png",
+  "AcceptsFeedback": true
 }
