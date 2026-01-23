@@ -139,7 +139,7 @@ namespace QuestoGraph.Windows
             ImGui.TextUnformatted("SPECIAL THANKS");
             ImGui.BulletText("anna - QuestMap Creator");
             ImGui.BulletText("Azure Gem - QuestMap Contributor");
-            ImGui.BulletText("#?%$# - Plugin Icon");
+            ImGui.BulletText("celocne - Plugin Icon");
             ImGui.BulletText("All the testers");
         }
 
