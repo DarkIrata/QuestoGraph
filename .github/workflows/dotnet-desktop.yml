@@ -32,12 +32,17 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 10.0.x
+      
+    - name: Download Dalamud Latest
+      run: |
+        Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile latest.zip
+        Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev"
         
     - name: Restore Nuget Packages
-      run: dotnet restore
+      run: dotnet restore $env:PROJECT_NAME/$env:PROJECT_NAME.csproj
 
     - name: Build Plugin
-      run: dotnet build --no-restore -c Release -p:AssemblyVersion=${{ env.tag }} -p:FileVersion=${{ env.tag }} -p:PackageVersion=${{ env.tag }} -p:InformationalVersion=${{ env.tag }} --output .\build
+      run: dotnet build --no-restore -c Release $env:PROJECT_NAME/$env:PROJECT_NAME.csproj -p:AssemblyVersion=${{ env.tag }} -p:FileVersion=${{ env.tag }} -p:PackageVersion=${{ env.tag }} -p:InformationalVersion=${{ env.tag }} --output .\build
 
     - name: Publish Plugin
       uses: softprops/action-gh-release@v2
