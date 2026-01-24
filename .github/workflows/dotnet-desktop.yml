@@ -35,7 +35,7 @@ jobs:
       run: dotnet restore
 
     - name: Build Plugin
-      run: dotnet build --no-restore -c Release $ -p:AssemblyVersion=${{ env.tag }} -p:FileVersion=${{ env.tag }} -p:PackageVersion=${{ env.tag }} -p:InformationalVersion=${{ env.tag }} --output .\build
+      run: dotnet build --no-restore -c Release -p:AssemblyVersion=${{ env.tag }} -p:FileVersion=${{ env.tag }} -p:PackageVersion=${{ env.tag }} -p:InformationalVersion=${{ env.tag }} --output .\build
 
     - name: Publish Plugin
       uses: softprops/action-gh-release@v2
