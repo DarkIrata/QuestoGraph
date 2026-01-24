@@ -23,9 +23,10 @@ jobs:
         
     - name: Get Environment Variables
       run: |
-        echo $env:PROJECT_NAME
         $tag = "${{ github.ref }}" -replace 'refs/tags/', ''
         "tag=$tag" | Out-File -Append -FilePath $Env:GITHUB_ENV
+        echo Project = $env:PROJECT_NAME
+        echo Tag = $tag
         
     - name: Set up .NET
       uses: actions/setup-dotnet@v1
