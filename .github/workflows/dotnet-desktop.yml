@@ -4,7 +4,6 @@ on:
   push:
     tags:
       - '*.*.*.*'
-  workflow_dispatch: # Allows manual trigger
 
 jobs:
   Build:
