@@ -25,8 +25,7 @@ jobs:
       run: |
         $tag = "${{ github.ref }}" -replace 'refs/tags/', ''
         "tag=$tag" | Out-File -Append -FilePath $Env:GITHUB_ENV
-        echo Project = $env:PROJECT_NAME
-        echo Tag = $tag
+        echo $env:PROJECT_NAME - $tag
         
     - name: Set up .NET
       uses: actions/setup-dotnet@v1
@@ -44,8 +43,21 @@ jobs:
     - name: Build Plugin
       run: dotnet build --no-restore -c Release $env:PROJECT_NAME/$env:PROJECT_NAME.csproj -p:AssemblyVersion=${{ env.tag }} -p:FileVersion=${{ env.tag }} -p:PackageVersion=${{ env.tag }} -p:InformationalVersion=${{ env.tag }} --output .\build
 
-    - name: Publish Plugin
-      uses: softprops/action-gh-release@v2
-      with:
-        files: ./build/$env:PROJECT_NAME/latest.zip
-        token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Test Outputs
+      run: |
+        echo "---------"
+        dir .\
+        echo "---------"
+        dir .\build
+        echo "---------"
+        dir .\build\$env:PROJECT_NAME
+        echo "---------"
+        dir .\$env:PROJECT_NAME
+        echo "---------"
+        dir .\$env:PROJECT_NAME\$env:PROJECT_NAME
+        
+    # - name: Publish Plugin
+    #   uses: softprops/action-gh-release@v2
+    #   with:
+    #     files: ./build/$env:PROJECT_NAME/latest.zip
+    #     token: ${{ secrets.GITHUB_TOKEN }}
