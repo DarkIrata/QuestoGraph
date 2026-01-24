@@ -1,6 +1,7 @@
 ﻿{
   "Author": "DarkIrata, Anna, Azure Gem",
   "Name": "Quest'o'Graph",
+  "InternalName": "QuestoGraph",
   "Punchline": "Explore quests and their rewards. QuestMap successor.",
   "RepoUrl": "https://github.com/DarkIrata/QuestoGraph",
   "Description": "Quickly look through all the Quests of FFXIV and their rewards. This Plugin is a QuestMap successor with more features.",
