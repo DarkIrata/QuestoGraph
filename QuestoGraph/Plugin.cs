@@ -4,6 +4,7 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using QuestoGraph.Data.Settings;
 using QuestoGraph.Manager;
+using QuestoGraph.Services.Events;
 
 namespace QuestoGraph
 {
@@ -39,6 +40,7 @@ namespace QuestoGraph
 
         private Config Config { get; }
 
+        private readonly EventAggregator eventAggregator;
         private readonly QuestsManager questsManager;
         private readonly UIManager uiManager;
 
@@ -46,8 +48,9 @@ namespace QuestoGraph
         {
             this.Config = Interface.GetPluginConfig() as Config ?? new Config();
 
+            this.eventAggregator = new EventAggregator();
             this.questsManager = new QuestsManager(this.Config);
-            this.uiManager = new UIManager(this.Config, this.questsManager);
+            this.uiManager = new UIManager(this.Config, this.questsManager, this.eventAggregator);
 
             this.RegisterCommands();
         }

@@ -24,7 +24,7 @@ namespace QuestoGraph.Utils
 
         internal static Node GetNode(NodeData nodeData)
         {
-            var dims = ImGui.CalcTextSize(nodeData.Text) + TextOffset * 2;
+            var dims = ImGui.CalcTextSize(nodeData.Text) + (TextOffset * 2);
             return new Node(CurveFactory.CreateRectangle(dims.X, dims.Y, new Point()), nodeData);
         }
 

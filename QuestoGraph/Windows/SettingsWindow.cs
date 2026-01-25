@@ -7,6 +7,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using QuestoGraph.Data.Settings;
 using QuestoGraph.Manager;
+using QuestoGraph.Services.Events;
 using QuestoGraph.Utils;
 
 namespace QuestoGraph.Windows
@@ -27,18 +28,20 @@ namespace QuestoGraph.Windows
         private readonly Version assemblyVersion = Assembly.GetExecutingAssembly()?.GetName()?.Version ?? new Version(0, 0);
         private readonly QuestsManager questsManager;
         private readonly UIManager uiManager;
+        private readonly EventAggregator eventAggregator;
 
         private Options selectedOption = Options.General;
         private bool oldShowArrowheads = true;
         private bool oldCompressMSQ = true;
         private ClientLanguage oldLanguage = ClientLanguage.English;
 
-        public SettingsWindow(Config config, QuestsManager questsManager, UIManager uiManager)
+        public SettingsWindow(Config config, QuestsManager questsManager, UIManager uiManager, Services.Events.EventAggregator eventAggregator)
             : base($"{Plugin.Name} - Settings##Settings", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoResize)
         {
             this.config = config;
             this.questsManager = questsManager;
             this.uiManager = uiManager;
+            this.eventAggregator = eventAggregator;
 
             var windowSize = new Vector2(375, 310);
             this.SizeConstraints = new WindowSizeConstraints

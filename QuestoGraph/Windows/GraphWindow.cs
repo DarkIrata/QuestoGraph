@@ -10,6 +10,7 @@ using QuestoGraph.Data;
 using QuestoGraph.Data.Graph;
 using QuestoGraph.Data.Settings;
 using QuestoGraph.Manager;
+using QuestoGraph.Services.Events;
 using QuestoGraph.Utils;
 
 namespace QuestoGraph.Windows
@@ -37,6 +38,7 @@ namespace QuestoGraph.Windows
         private readonly Config config;
         private readonly QuestsManager questsManager;
         private readonly GraphBuilder graphBuilder;
+        private readonly EventAggregator eventAggregator;
 
         private GeometryGraph? Graph { get; set; }
 
@@ -51,12 +53,13 @@ namespace QuestoGraph.Windows
         private QuestData? lastSelectedQuest;
         private CancellationTokenSource? calcCancellationTokenSource = null;
 
-        public GraphWindow(Config config, QuestsManager questsManager)
+        public GraphWindow(Config config, QuestsManager questsManager, EventAggregator eventAggregator)
             : base($"{Plugin.Name} - Graph##GraphView", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
         {
             this.config = config;
             this.questsManager = questsManager;
             this.graphBuilder = new GraphBuilder();
+            this.eventAggregator = eventAggregator;
 
             this.SizeConstraints = new WindowSizeConstraints
             {

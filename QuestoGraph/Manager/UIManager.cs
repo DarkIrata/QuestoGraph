@@ -1,6 +1,7 @@
 ﻿using Dalamud.Interface.Windowing;
 using QuestoGraph.Data;
 using QuestoGraph.Data.Settings;
+using QuestoGraph.Services.Events;
 using QuestoGraph.Windows;
 
 namespace QuestoGraph.Manager
@@ -14,15 +15,17 @@ namespace QuestoGraph.Manager
         private readonly MainWindow mainWindow;
         private readonly SettingsWindow settingsWindow;
         private readonly GraphWindow graphWindow;
+        private readonly EventAggregator eventAggregator;
 
-        public UIManager(Config config, QuestsManager questsManager)
+        public UIManager(Config config, QuestsManager questsManager, EventAggregator eventAggregator)
         {
             this.config = config;
             this.questsManager = questsManager;
+            this.eventAggregator = eventAggregator;
 
-            this.mainWindow = new MainWindow(this.config, this.questsManager, this);
-            this.settingsWindow = new SettingsWindow(this.config, this.questsManager, this);
-            this.graphWindow = new GraphWindow(this.config, this.questsManager);
+            this.mainWindow = new MainWindow(this.config, this.questsManager, this, this.eventAggregator);
+            this.settingsWindow = new SettingsWindow(this.config, this.questsManager, this, this.eventAggregator);
+            this.graphWindow = new GraphWindow(this.config, this.questsManager, this.eventAggregator);
             this.WindowSystem.AddWindow(this.mainWindow);
             this.WindowSystem.AddWindow(this.settingsWindow);
             this.WindowSystem.AddWindow(this.graphWindow);

@@ -27,8 +27,8 @@ namespace QuestoGraph.Utils
             QuestsManager questsManager,
             QuestData questData,
             Config config,
-            CancellationToken cancel,
-            Stopwatch? sw)
+            Stopwatch? sw,
+            CancellationToken cancel)
         {
             if (questData is null)
             {
@@ -73,7 +73,12 @@ namespace QuestoGraph.Utils
                 : new(graph, centerNode);
         }
 
-        private Dictionary<uint, (Node Node, Side Side)> BuildNodes(Config config, QuestsManager questsManager, QuestData startQuestData, Stopwatch sw, CancellationToken cancel)
+        private Dictionary<uint, (Node Node, Side Side)> BuildNodes(
+            Config config,
+            QuestsManager questsManager,
+            QuestData startQuestData,
+            Stopwatch sw,
+            CancellationToken cancel)
         {
             var nodes = new Dictionary<uint, (Node Node, Side Side)>();
             var stack = new Stack<(uint id, Side side)>();
@@ -84,7 +89,7 @@ namespace QuestoGraph.Utils
             {
                 if (cancel.IsCancellationRequested)
                 {
-                    this.Log($"Build was cancled (Nodes) - '{sw.Elapsed}'", false);
+                    this.Log($"Build was cancled (Nodes) - '{sw!.Elapsed}'", false);
                     return nodes;
                 }
 
@@ -124,7 +129,7 @@ namespace QuestoGraph.Utils
                     }
                 }
             }
-            this.Log($"Determined {nodes.Count} Nodes - '{sw.Elapsed}'");
+            this.Log($"Determined {nodes.Count} Nodes - '{sw!.Elapsed}'");
 
             return nodes;
         }

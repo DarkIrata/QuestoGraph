@@ -10,6 +10,7 @@ using QuestoGraph.Data;
 using QuestoGraph.Data.Settings;
 using QuestoGraph.Enums;
 using QuestoGraph.Manager;
+using QuestoGraph.Services.Events;
 using QuestoGraph.Utils;
 
 namespace QuestoGraph.Windows
@@ -19,16 +20,19 @@ namespace QuestoGraph.Windows
         private readonly Config config;
         private readonly QuestsManager questsManager;
         private readonly UIManager uiManager;
+        private readonly EventAggregator eventAggregator;
 
         private string filter = string.Empty;
         private QuestData? selectedQuestData = null;
 
-        public MainWindow(Config config, QuestsManager questsManager, UIManager uiManager)
+        public MainWindow(Config config, QuestsManager questsManager, UIManager uiManager, EventAggregator eventAggregator)
             : base($"{Plugin.Name} - Overview##Main View", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
         {
             this.config = config;
             this.questsManager = questsManager;
             this.uiManager = uiManager;
+            this.eventAggregator = eventAggregator;
+
 
             this.SizeConstraints = new WindowSizeConstraints
             {
@@ -125,7 +129,7 @@ namespace QuestoGraph.Windows
                 {
                     if (this.questsManager.CurrentState == QuestsManager.State.Initializing)
                     {
-                        var diameter = 48f;
+                        const float diameter = 48f;
                         ImGui.SetCursorPos((ImGui.GetContentRegionAvail() - new System.Numerics.Vector2(diameter, diameter)) * 0.5f);
                         ImGuiUtils.DrawWeirdSpinner(
                             radius: diameter / 2,
@@ -267,7 +271,7 @@ namespace QuestoGraph.Windows
                 using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.Y))
                 {
                     const short iconModifier = 2;
-                    var targetIconSize = iconSize + iconModifier;
+                    const int targetIconSize = iconSize + iconModifier;
                     var actions = questData.GeneralActions.Where(ga => ga.Icon > 0).ToArray();
                     var lastX = rewardsPos.X - (iconModifier / 2) + dummySize.X;
                     for (int i = 0; i < actions.Length; i++)
@@ -298,7 +302,7 @@ namespace QuestoGraph.Windows
                 using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.Y))
                 {
                     const short iconModifier = 5;
-                    var targetIconSize = iconSize + iconModifier;
+                    const int targetIconSize = iconSize + iconModifier;
 
                     freePos.SetX(rewardsPos.X - (iconModifier / 2) + dummySize.X);
                     freePos.SetY(rewardsPos.Y - (iconModifier / 2));
@@ -320,7 +324,7 @@ namespace QuestoGraph.Windows
                 using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.Y))
                 {
                     const short jobIconModifier = 11;
-                    var jobIconSize = iconSize + jobIconModifier;
+                    const int jobIconSize = iconSize + jobIconModifier;
 
                     freePos.SetX(rewardsPos.X - (jobIconModifier / 2) + dummySize.X);
                     freePos.SetY(rewardsPos.Y - (jobIconModifier / 2));
