@@ -33,7 +33,6 @@ namespace QuestoGraph.Windows
         private Options selectedOption = Options.General;
         private bool oldShowArrowheads = true;
         private bool oldCompressMSQ = true;
-        private ClientLanguage oldLanguage = ClientLanguage.English;
 
         public SettingsWindow(Config config, QuestsManager questsManager, UIManager uiManager, Services.Events.EventAggregator eventAggregator)
             : base($"{Plugin.Name} - Settings##Settings", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoResize)
@@ -55,10 +54,8 @@ namespace QuestoGraph.Windows
         {
             base.OnOpen();
 
-            this.oldLanguage = this.config.General.Language;
             this.oldShowArrowheads = this.config.Graph.ShowArrowheads;
             this.oldCompressMSQ = this.config.Graph.CompressMSQ;
-            Plugin.Log.Debug($"Org Language: {this.oldLanguage}");
         }
 
         public override void OnClose()
@@ -68,14 +65,7 @@ namespace QuestoGraph.Windows
             Plugin.Log.Info("Saving configuration");
             Plugin.Interface.SavePluginConfig(this.config);
 
-            if (this.config.General.Language != this.oldLanguage)
-            {
-                this.questsManager.ReInitialize();
-            }
-            else
-            {
-                this.questsManager.RefreshList();
-            }
+            this.questsManager.ReInitialize();
 
             if (this.config.Graph.ShowArrowheads != this.oldShowArrowheads ||
                 this.config.Graph.CompressMSQ != this.oldCompressMSQ)
@@ -155,11 +145,13 @@ namespace QuestoGraph.Windows
                 ImGui.TextUnformatted("when you close settings.");
             }
 
-            ImGuiUtils.SeperatorWithText("Quests");
+            ImGuiUtils.SeperatorWithText("Language");
             using (var indent = new ImRaii.Indent())
             {
                 indent.Push(1);
-                this.config.General.Language = this.Combobox("Language", this.config.General.Language, Plugin.DataManager.Language, Enum.GetValues<ClientLanguage>());
+                this.config.General.Language.QuestNames = this.Combobox("Quests", this.config.General.Language.QuestNames, Plugin.DataManager.Language, Enum.GetValues<ClientLanguage>());
+                this.config.General.Language.Rewards = this.Combobox("Rewards", this.config.General.Language.Rewards, Plugin.DataManager.Language, Enum.GetValues<ClientLanguage>());
+                this.config.General.Language.Instances = this.Combobox("Instances", this.config.General.Language.Instances, Plugin.DataManager.Language, Enum.GetValues<ClientLanguage>());
             }
         }
 

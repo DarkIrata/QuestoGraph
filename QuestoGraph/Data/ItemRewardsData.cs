@@ -1,4 +1,5 @@
-﻿using Lumina.Excel.Sheets;
+﻿using Dalamud.Game;
+using Lumina.Excel.Sheets;
 
 namespace QuestoGraph.Data
 {
@@ -22,11 +23,11 @@ namespace QuestoGraph.Data
 
         public ItemData? OtherItem { get; }
 
-        public ItemRewardsData(Quest quest)
+        public ItemRewardsData(Quest quest, ClientLanguage clientLanguage = ClientLanguage.English)
         {
-            this.OptionalItems = this.ParseOptionalItems(quest);
-            this.CatalystItems = this.ParseCatalystItems(quest);
-            this.RewardItems = this.ParseRewardItems(quest);
+            this.OptionalItems = this.ParseOptionalItems(quest, clientLanguage);
+            this.CatalystItems = this.ParseCatalystItems(quest, clientLanguage);
+            this.RewardItems = this.ParseRewardItems(quest, clientLanguage);
             this.OtherItem = this.ParseOtherItem(quest);
         }
 
@@ -38,10 +39,15 @@ namespace QuestoGraph.Data
             }
 
             var item = quest.OtherReward.Value;
+            if (item.RowId == 0)
+            {
+                return null;
+            }
+
             return new ItemData(item.RowId, item.Icon, item.Name.ExtractText(), 1, false, null);
         }
 
-        private IReadOnlyList<ItemData> ParseRewardItems(Quest quest)
+        private List<ItemData> ParseRewardItems(Quest quest, ClientLanguage clientLanguage = ClientLanguage.English)
         {
             var result = new List<ItemData>();
             for (int i = 0; i < quest.Reward.Count; i++)
@@ -53,7 +59,7 @@ namespace QuestoGraph.Data
                     continue;
                 }
 
-                var item = Plugin.DataManager.GetExcelSheet<Item>(Dalamud.Game.ClientLanguage.English)!.GetRow(itemId);
+                var item = Plugin.DataManager.GetExcelSheet<Item>(clientLanguage)!.GetRow(itemId);
                 var amount = quest.ItemCountReward[i];
                 var stain = quest.RewardStain[i];
 
@@ -65,46 +71,48 @@ namespace QuestoGraph.Data
             return result;
         }
 
-        private List<ItemData> ParseCatalystItems(Quest quest)
+        private List<ItemData> ParseCatalystItems(Quest quest, ClientLanguage clientLanguage = ClientLanguage.English)
         {
             var result = new List<ItemData>();
             for (int i = 0; i < quest.ItemCatalyst.Count; i++)
             {
-                var item = quest.ItemCatalyst[i];
-                var itemId = item.RowId;
+                var rowItem = quest.ItemCatalyst[i];
+                var itemId = rowItem.RowId;
                 if (itemId == 0)
                 {
                     continue;
                 }
 
+                var item = Plugin.DataManager.GetExcelSheet<Item>(clientLanguage)!.GetRow(itemId);
                 var amount = quest.ItemCountCatalyst[i];
 
                 //Plugin.Log.Info($"Catalyst: {amount}x {name}");
-                var itemData = new ItemData(itemId, item.Value.Icon, item.Value.Name.ExtractText(), amount, false, null);
+                var itemData = new ItemData(itemId, item.Icon, item.Name.ExtractText(), amount, false, null);
                 result.Add(itemData);
             }
 
             return result;
         }
 
-        private List<ItemData> ParseOptionalItems(Quest quest)
+        private List<ItemData> ParseOptionalItems(Quest quest, ClientLanguage clientLanguage = ClientLanguage.English)
         {
             var result = new List<ItemData>();
             for (int i = 0; i < quest.OptionalItemReward.Count; i++)
             {
-                var item = quest.OptionalItemReward[i];
-                var itemId = item.RowId;
+                var rowItem = quest.OptionalItemReward[i];
+                var itemId = rowItem.RowId;
                 if (itemId == 0)
                 {
                     continue;
                 }
 
+                var item = Plugin.DataManager.GetExcelSheet<Item>(clientLanguage)!.GetRow(itemId);
                 var isHQ = quest.OptionalItemIsHQReward[i];
                 var amount = quest.OptionalItemCountReward[i];
                 var stain = quest.OptionalItemStainReward[i];
 
                 //Plugin.Log.Info($"Optional: {amount}x {name} ({(isHQ ? "HQ" : "NQ")}) {(stain.RowId != 0 ? stain.Value.Name : string.Empty)}");
-                var itemData = new ItemData(itemId, item.Value.Icon, item.Value.Name.ExtractText(), amount, isHQ, stain.ValueNullable);
+                var itemData = new ItemData(itemId, item.Icon, item.Name.ExtractText(), amount, isHQ, stain.ValueNullable);
                 result.Add(itemData);
             }
 

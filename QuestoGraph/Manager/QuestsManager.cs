@@ -62,7 +62,7 @@ namespace QuestoGraph.Manager
             Plugin.Log.Info($"Initializing Quests..");
             this.CurrentState = State.Initializing;
             var result = new Dictionary<uint, QuestData>();
-            foreach (var quest in Plugin.DataManager.GetExcelSheet<Quest>(this.config.General.Language))
+            foreach (var quest in Plugin.DataManager.GetExcelSheet<Quest>(this.config.General.Language.QuestNames))
             {
                 if (string.IsNullOrEmpty(quest.Name.ExtractText()) ||
                     result.ContainsKey(quest.RowId))
@@ -70,7 +70,7 @@ namespace QuestoGraph.Manager
                     continue;
                 }
 
-                var questData = new QuestData(quest);
+                var questData = new QuestData(quest, this.config.General.Language);
                 result.Add(questData.RowId, questData);
             }
 

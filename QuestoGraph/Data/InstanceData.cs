@@ -1,4 +1,5 @@
-﻿using Lumina.Excel.Sheets;
+﻿using Dalamud.Game;
+using Lumina.Excel.Sheets;
 using static Lumina.Excel.Sheets.Quest;
 
 namespace QuestoGraph.Data
@@ -13,15 +14,15 @@ namespace QuestoGraph.Data
 
         public bool ContentFound => this.ContentFinder.RowId != 0;
 
-        public InstanceData(QuestParamsStruct questParams)
-            : this(questParams.ScriptArg)
+        public InstanceData(QuestParamsStruct questParams, ClientLanguage clientLanguage = ClientLanguage.English)
+            : this(questParams.ScriptArg, clientLanguage)
         {
         }
 
-        public InstanceData(uint contentRowId)
+        public InstanceData(uint contentRowId, ClientLanguage clientLanguage = ClientLanguage.English)
         {
             // Only InstanceContent (ContentLinkType) 
-            var contentFinder = Plugin.DataManager.GetExcelSheet<ContentFinderCondition>(Dalamud.Game.ClientLanguage.English)!
+            var contentFinder = Plugin.DataManager.GetExcelSheet<ContentFinderCondition>(clientLanguage)!
                 .FirstOrDefault(cfc => cfc.Content.RowId == contentRowId && cfc.ContentLinkType == 1);
 
             if (contentFinder.RowId == 0)

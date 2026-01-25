@@ -1,4 +1,5 @@
 ﻿using Lumina.Excel.Sheets;
+using QuestoGraph.Data.Settings;
 using QuestoGraph.Enums;
 
 namespace QuestoGraph.Data
@@ -50,9 +51,12 @@ namespace QuestoGraph.Data
         // from what i could see
         public bool IsReachable => !this.Quest.Unknown12 || (!this.Quest.IssuerLocation.IsValid && this.Quest.IssuerLocation.RowId != 0);
 
-        public QuestData(Quest quest)
+        private readonly LanguageSettings languageSettings;
+
+        public QuestData(Quest quest, LanguageSettings languageSettings)
         {
             this.Quest = quest;
+            this.languageSettings = languageSettings;
             this.QuestType = quest.EventIconType.RowId switch
             {
                 3 => QuestTypes.MSQ,
@@ -63,7 +67,7 @@ namespace QuestoGraph.Data
 
             this.SetPreviousQuests();
 
-            this.ItemRewards = new ItemRewardsData(quest);
+            this.ItemRewards = new ItemRewardsData(quest, this.languageSettings.Rewards);
 
             this.GeneralActions = quest.GeneralActionReward
                 .Where(ga => ga.IsValid && ga.RowId != 0)
@@ -105,7 +109,7 @@ namespace QuestoGraph.Data
                 // To get older classes, we check the other reward to find the soul stone.
                 // We cant trust the naming, since ClientLanguage Settings could become a feature...
                 // Also Other Items do different RowIds..... 
-                var item = Plugin.DataManager.GetExcelSheet<Item>(Dalamud.Game.ClientLanguage.English)!.FirstOrDefault(i => i.Icon == this.ItemRewards.OtherItem.Icon);
+                var item = Plugin.DataManager.GetExcelSheet<Item>(this.languageSettings.Rewards)!.FirstOrDefault(i => i.Icon == this.ItemRewards.OtherItem.Icon);
                 if (item.ClassJobUse.RowId != 0)
                 {
                     return item.ClassJobUse.Value;
@@ -124,11 +128,11 @@ namespace QuestoGraph.Data
 
                 instanceUnlocks.AddRange(quest.QuestParams
                     .Where(param => param.ScriptInstruction.ExtractText().Contains(InstanceScriptInstruct))
-                    .Select(qp => new InstanceData(qp)));
+                    .Select(qp => new InstanceData(qp, this.languageSettings.Instances)));
 
                 if (quest.InstanceContentUnlock.RowId != 0 && !instanceUnlocks.Any(iu => iu.ContentRowId == quest.InstanceContentUnlock.RowId))
                 {
-                    instanceUnlocks.Add(new InstanceData(quest.InstanceContentUnlock.RowId));
+                    instanceUnlocks.Add(new InstanceData(quest.InstanceContentUnlock.RowId, this.languageSettings.Instances));
                 }
             }
 

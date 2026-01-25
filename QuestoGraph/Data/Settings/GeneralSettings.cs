@@ -1,9 +1,7 @@
-﻿using Dalamud.Game;
-
-namespace QuestoGraph.Data.Settings
+﻿namespace QuestoGraph.Data.Settings
 {
     public class GeneralSettings
     {
-        public ClientLanguage Language { get; set; } = Plugin.DataManager.Language;
+        public LanguageSettings Language { get; set; } = new LanguageSettings();
     }
 }
