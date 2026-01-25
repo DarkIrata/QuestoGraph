@@ -113,11 +113,9 @@ namespace QuestoGraph.Windows
                     case Options.Colors:
                         this.DrawColorOption();
                         break;
-#if DEBUG
                     case Options.Graph:
                         this.DrawGraphOption();
                         break;
-#endif
                     case Options.About:
                     default:
                         this.DrawAboutOption();
@@ -130,7 +128,8 @@ namespace QuestoGraph.Windows
         {
             ImGuiHelpers.CenteredText("•°*•._ Quest'o'Graph _.•*°•");
             ImGuiHelpers.CenteredText($"v{this.assemblyVersion}");
-            ImGuiHelpers.CenteredText("A (WIP) mostly rewritten successor to QuestMap");
+            ImGuiHelpers.CenteredText("A (WIP) mostly rewritten ");
+            ImGuiHelpers.CenteredText("   successor to QuestMap");
             ImGuiHelpers.CenteredText("-.,_,.='``'-.,_,.-'``'=.,_,.-");
             ImGuiHelpers.ScaledDummy(1f, 5f);
             ImGuiHelpers.CenteredText("Bugs or Improvement? Submit it!");
