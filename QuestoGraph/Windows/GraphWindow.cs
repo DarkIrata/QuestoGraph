@@ -42,6 +42,7 @@ namespace QuestoGraph.Windows
 
         private Node? CenterNode { get; set; }
 
+        private Vector2 centerOffset = Vector2.Zero;
         private Vector2 dragOffset = Vector2.Zero;
         private float zoomLevel = 1f;
         private bool viewDrag;
@@ -113,7 +114,7 @@ namespace QuestoGraph.Windows
             }
             else if (this.SelectedQuest.RowId == 0 || this.Graph == null)
             {
-                var diameter = 86;
+                const int diameter = 86;
                 ImGui.SetCursorPos((ImGui.GetWindowSize() - new Vector2(diameter, diameter)) * 0.5f);
                 ImGuiUtils.DrawWeirdSpinner(
                     radius: diameter / 2,
@@ -164,7 +165,6 @@ namespace QuestoGraph.Windows
                 Plugin.Log.Info("Start Graph Recalculation");
                 sw.Start();
 
-                //var info = await GraphUtils.GetGraphInfo(quest, this.questsManager, this.config, calcCancellationTokenSource.Token, sw);
                 var graphData = this.graphBuilder.Build(this.questsManager, quest, this.config, calcCancellationTokenSource.Token, sw);
 
                 this.zoomLevel = 1f;
@@ -193,29 +193,35 @@ namespace QuestoGraph.Windows
             ImGui.BeginGroup();
 
             ImGui.InvisibleButton("##NodeEmpty", size);
-            var canvasTopLeft = ImGui.GetItemRectMin();
-            var canvasBottomRight = ImGui.GetItemRectMax();
+            var canvasData = new CanvasData(ImGui.GetItemRectMin(), ImGui.GetItemRectMax());
+            canvasData.Pivot = canvasData.Center;// Maybe make use of ImGui.GetMousePos();
 
             if (this.CenterNode != null)
             {
-                this.dragOffset = (this.CenterNode.Center.ToVector2() * -1) + ((canvasBottomRight - canvasTopLeft) / 2);
+                var center = -canvasData.Center * 0.5f;
+                var centerNodeVector = -this.CenterNode.Center.ToVector2();
+                var x = center.X + (centerNodeVector.X + (this.CenterNode.Width / 2));
+                var y = center.Y + centerNodeVector.Y - this.CenterNode.Height;
+                this.centerOffset = new Vector2((float)x, (float)y);
+                this.dragOffset = new Vector2((float)x, (float)y);
+
                 this.CenterNode = null;
             }
 
-            drawList.PushClipRect(canvasTopLeft, canvasBottomRight, true);
+            drawList.PushClipRect(canvasData.Topleft, canvasData.BottomRight, true);
 
             // Background
-            drawList.AddRectFilled(canvasTopLeft, canvasBottomRight, Colors.Background);
+            drawList.AddRectFilled(canvasData.Topleft, canvasData.BottomRight, Colors.Background);
 
             // Background Grid
-            this.DrawGrid(drawList, size, canvasTopLeft, canvasBottomRight);
-
-            // Graph Border
-            drawList.AddRect(canvasTopLeft, canvasBottomRight, Colors.Border);
+            this.DrawGrid(drawList, size, canvasData);
 
             // Content
-            this.DrawNodeConnections(drawList, graph.Edges, canvasTopLeft, canvasBottomRight);
-            var drawn = this.DrawNodes(drawList, graph.Nodes, canvasTopLeft, canvasBottomRight);
+            this.DrawNodeConnections(drawList, graph.Edges, canvasData);
+            var drawn = this.DrawNodes(drawList, graph.Nodes, canvasData);
+
+            // Graph Border
+            drawList.AddRect(canvasData.Topleft, canvasData.BottomRight, Colors.Border);
 
             if (ImGui.IsItemActive())
             {
@@ -265,7 +271,7 @@ namespace QuestoGraph.Windows
                     if (left || right)
                     {
                         var mousePos = ImGui.GetMousePos();
-                        foreach (var (start, end, id) in drawn)
+                        foreach (var (start, end, _) in drawn)
                         {
                             var inBox = mousePos.X >= start.X && mousePos.X <= end.X && mousePos.Y >= start.Y && mousePos.Y <= end.Y;
                             if (!inBox)
@@ -300,13 +306,13 @@ namespace QuestoGraph.Windows
             ImGui.EndGroup();
         }
 
-        private void DrawNodeConnections(ImDrawListPtr drawList, EdgeCollection edges, Vector2 canvasTopLeft, Vector2 canvasBottomRight)
+        private void DrawNodeConnections(ImDrawListPtr drawList, EdgeCollection edges, CanvasData canvasData)
         {
             void DrawNodeLine(LineSegment line)
             {
                 drawList.AddLine(
-                    this.ConvertDrawPoint(canvasBottomRight, line.Start),
-                    this.ConvertDrawPoint(canvasBottomRight, line.End),
+                    this.ConvertDrawPointPivoted(canvasData, line.Start),
+                    this.ConvertDrawPointPivoted(canvasData, line.End),
                     Colors.Line,
                     3.0f * this.zoomLevel
                 );
@@ -314,8 +320,9 @@ namespace QuestoGraph.Windows
 
             foreach (var edge in edges)
             {
-                var start = canvasBottomRight - (edge.GetTopLeft(this.dragOffset) * this.zoomLevel);
-                if (this.IsHidden(canvasTopLeft, canvasBottomRight, edge, start))
+                var topLeft = canvasData.BottomRight + edge.GetTopLeft(this.dragOffset);
+                var start = canvasData.Pivot + (canvasData.Pivot - topLeft) * this.zoomLevel;
+                if (this.IsHidden(canvasData.Topleft, canvasData.BottomRight, edge, start))
                 {
                     continue;
                 }
@@ -331,10 +338,10 @@ namespace QuestoGraph.Windows
                         else if (segment is CubicBezierSegment cs)
                         {
                             drawList.AddBezierCubic(
-                                this.ConvertDrawPoint(canvasBottomRight, cs.B(0)),
-                                this.ConvertDrawPoint(canvasBottomRight, cs.B(1)),
-                                this.ConvertDrawPoint(canvasBottomRight, cs.B(2)),
-                                this.ConvertDrawPoint(canvasBottomRight, cs.B(3)),
+                                this.ConvertDrawPointPivoted(canvasData, cs.B(0)),
+                                this.ConvertDrawPointPivoted(canvasData, cs.B(1)),
+                                this.ConvertDrawPointPivoted(canvasData, cs.B(2)),
+                                this.ConvertDrawPointPivoted(canvasData, cs.B(3)),
                                 Colors.Line,
                                 3.0f * this.zoomLevel
                             );
@@ -350,33 +357,26 @@ namespace QuestoGraph.Windows
                 {
                     this.DrawArrow(
                         drawList,
-                        this.ConvertDrawPoint(canvasBottomRight, edge.Curve.End),
-                        this.ConvertDrawPoint(canvasBottomRight, edge.EdgeGeometry.TargetArrowhead.TipPosition)
-                    );
-                }
-
-                if (edge.ArrowheadAtSource)
-                {
-                    this.DrawArrow(
-                        drawList,
-                        this.ConvertDrawPoint(canvasBottomRight, edge.Curve.Start),
-                        this.ConvertDrawPoint(canvasBottomRight, edge.EdgeGeometry.SourceArrowhead.TipPosition)
+                        this.ConvertDrawPointPivoted(canvasData, edge.Curve.End),
+                        this.ConvertDrawPointPivoted(canvasData, edge.EdgeGeometry.TargetArrowhead.TipPosition)
                     );
                 }
             }
         }
 
-        private List<(Vector2, Vector2, uint)> DrawNodes(ImDrawListPtr drawList, IList<Node> nodes, Vector2 canvasTopLeft, Vector2 canvasBottomRight)
+        private List<(Vector2, Vector2, uint)> DrawNodes(
+            ImDrawListPtr drawList,
+            IList<Node> nodes,
+            CanvasData canvasData)
         {
             var drawn = new List<(Vector2, Vector2, uint)>();
             foreach (var node in nodes)
             {
-                var graphNode = node.UserData as NodeData;
-                var topLeft = node.GetTopLeft(this.dragOffset);
-                var start = canvasBottomRight - (node.GetTopLeft(this.dragOffset) * this.zoomLevel);
+                var topLeft = canvasData.BottomRight + node.GetTopLeft(this.dragOffset);
+                var start = canvasData.Pivot + (canvasData.Pivot - topLeft) * this.zoomLevel;
 
-                if (this.IsHidden(canvasTopLeft, canvasBottomRight, node, start) ||
-                    graphNode is null)
+                if (this.IsHidden(canvasData.Topleft, canvasData.BottomRight, node, start) ||
+                    node.UserData is not NodeData graphNode)
                 {
                     continue;
                 }
@@ -401,12 +401,13 @@ namespace QuestoGraph.Windows
                     }
                 }
 
-                var end = canvasBottomRight - (node.GetBottomRight(this.dragOffset) * this.zoomLevel);
+                var bottomRight = canvasData.BottomRight + node.GetBottomRight(this.dragOffset);
+                var end = canvasData.Pivot + (canvasData.Pivot - bottomRight) * this.zoomLevel;
 
                 drawn.Add((start, end, graphNode!.Id));
                 if (this.SelectedQuest is not null && graphNode.Id == this.SelectedQuest.RowId)
                 {
-                    drawList.AddRect(start - Vector2.One, end + Vector2.One, Colors.Border, 5, ImDrawFlags.RoundCornersAll, 3.5f);
+                    drawList.AddRect(start - Vector2.One, end + Vector2.One, Colors.Border, 5, ImDrawFlags.RoundCornersAll, 3.5f * this.zoomLevel);
                 }
 
                 drawList.AddRectFilled(start, end, ImGui.GetColorU32(backgroundColor), 5, ImDrawFlags.RoundCornersAll);
@@ -417,51 +418,54 @@ namespace QuestoGraph.Windows
             return drawn;
         }
 
-        private void DrawGrid(ImDrawListPtr drawList, Vector2 size, Vector2 canvasTopLeft, Vector2 canvasBottomRight)
+        private void DrawGrid(ImDrawListPtr drawList, Vector2 size, CanvasData canvasData)
         {
             size /= (float)Math.Pow(this.zoomLevel, GridZoomMultiplier);
 
             // Vertical
             for (var i = 0; i < size.X / GridSmall; i++)
             {
-                this.DrawGridLine(drawList, canvasTopLeft, canvasBottomRight, i * GridSmall, true, Colors.Grid, GridSmallThickness);
+                this.DrawGridLine(drawList, canvasData, i * GridSmall, true, Colors.Grid, GridSmallThickness);
             }
 
             // Horizontal
             for (var i = 0; i < size.Y / GridSmall; i++)
             {
-                this.DrawGridLine(drawList, canvasTopLeft, canvasBottomRight, i * GridSmall, false, Colors.Grid, GridSmallThickness);
+                this.DrawGridLine(drawList, canvasData, i * GridSmall, false, Colors.Grid, GridSmallThickness);
             }
 
             // Vertical
             for (var i = 0; i < size.X / GridLarge; i++)
             {
-                this.DrawGridLine(drawList, canvasTopLeft, canvasBottomRight, i * GridLarge, true, Colors.Grid, GridLargeThickness);
+                this.DrawGridLine(drawList, canvasData, i * GridLarge, true, Colors.Grid, GridLargeThickness);
             }
 
             // Horizontal
             for (var i = 0; i < size.Y / GridLarge; i++)
             {
-                this.DrawGridLine(drawList, canvasTopLeft, canvasBottomRight, i * GridLarge, true, Colors.Grid, GridLargeThickness);
+                this.DrawGridLine(drawList, canvasData, i * GridLarge, true, Colors.Grid, GridLargeThickness);
             }
         }
 
-        private void DrawGridLine(ImDrawListPtr drawList, Vector2 canvasTopLeft, Vector2 canvasBottomRight, int linePadding, bool isVertical, uint color, float thickness)
+        private void DrawGridLine(ImDrawListPtr drawList, CanvasData canvasData, int linePadding, bool isVertical, uint color, float thickness)
         {
             if (isVertical)
             {
-                drawList.AddLine(new Vector2(canvasTopLeft.X + (linePadding * this.zoomLevel), canvasTopLeft.Y),
-                    new Vector2(canvasTopLeft.X + (linePadding * this.zoomLevel), canvasBottomRight.Y), color, thickness);
+                drawList.AddLine(new Vector2(canvasData.Topleft.X + (linePadding * this.zoomLevel), canvasData.Topleft.Y),
+                    new Vector2(canvasData.Topleft.X + (linePadding * this.zoomLevel), canvasData.BottomRight.Y), color, thickness);
             }
             else
             {
-                drawList.AddLine(new Vector2(canvasTopLeft.X, canvasTopLeft.Y + (linePadding * this.zoomLevel)),
-                    new Vector2(canvasBottomRight.X, canvasTopLeft.Y + (linePadding * this.zoomLevel)), color, thickness);
+                drawList.AddLine(new Vector2(canvasData.Topleft.X, canvasData.Topleft.Y + (linePadding * this.zoomLevel)),
+                    new Vector2(canvasData.BottomRight.X, canvasData.Topleft.Y + (linePadding * this.zoomLevel)), color, thickness);
             }
         }
 
-        private Vector2 ConvertDrawPoint(Vector2 canvasBottomRight, Point p)
-            => canvasBottomRight - ((p.ToVector2() + this.dragOffset) * this.zoomLevel);
+        private Vector2 ConvertDrawPointPivoted(Vector2 bottomRight, Vector2 pivot, Point p)
+            => pivot + (pivot - (bottomRight + (p.ToVector2() + this.dragOffset))) * this.zoomLevel;
+
+        private Vector2 ConvertDrawPointPivoted(CanvasData canvasData, Point p)
+            => this.ConvertDrawPointPivoted(canvasData.BottomRight, canvasData.Pivot, p);
 
         private void DrawArrow(ImDrawListPtr drawList, Vector2 start, Vector2 end)
         {
