@@ -33,12 +33,18 @@ namespace QuestoGraph.Windows
             this.uiManager = uiManager;
             this.eventAggregator = eventAggregator;
 
+            this.eventAggregator.Subscribe<GraphQuestClicked>(this.QuestNodeSelected);
 
             this.SizeConstraints = new WindowSizeConstraints
             {
                 MinimumSize = new Vector2(550, 400),
                 MaximumSize = new Vector2(1200, float.MaxValue),
             };
+        }
+
+        private void QuestNodeSelected(GraphQuestClicked data)
+        {
+            this.selectedQuestData = data.Quest;
         }
 
         public void Dispose()
