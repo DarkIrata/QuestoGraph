@@ -42,7 +42,7 @@ namespace QuestoGraph.Utils
                 sw.Start();
             }
 
-            this.Log($"Building Graph for '{questData.Name} - '{sw.Elapsed}''", false);
+            this.Log($"Building Graph for '{questData.Name}' - '{sw.Elapsed}'", false);
 
             var nodes = this.BuildNodes(config, questsManager, questData, sw, cancel);
             var graph = this.CreateGraphWithEdges(config, nodes, sw, cancel);
@@ -58,7 +58,6 @@ namespace QuestoGraph.Utils
                 LayoutHelpers.CalculateLayout(graph, LayoutSettings, msAglCancelToken);
             }
             this.Log($"Calculated Layout - '{sw.Elapsed}'");
-
 
             this.Log($"Finished Graph - '{sw.Elapsed}'", false);
             var centerNode = nodes.FirstOrDefault().Value.Node;
