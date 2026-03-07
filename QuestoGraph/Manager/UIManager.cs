@@ -15,8 +15,10 @@ namespace QuestoGraph.Manager
         private readonly MainWindow mainWindow;
         private readonly SettingsWindow settingsWindow;
         private readonly GraphWindow graphWindow;
+#if DEBUG
+        private readonly DebugWindow debugWindow;
+#endif
         private readonly EventAggregator eventAggregator;
-
         public UIManager(Config config, QuestsManager questsManager, EventAggregator eventAggregator)
         {
             this.config = config;
@@ -29,6 +31,10 @@ namespace QuestoGraph.Manager
             this.WindowSystem.AddWindow(this.mainWindow);
             this.WindowSystem.AddWindow(this.settingsWindow);
             this.WindowSystem.AddWindow(this.graphWindow);
+#if DEBUG
+            this.debugWindow = new DebugWindow(this.questsManager, this.eventAggregator);
+            this.WindowSystem.AddWindow(this.debugWindow);
+#endif
 
             Plugin.Interface.UiBuilder.Draw += this.DrawUI;
             Plugin.Interface.UiBuilder.OpenMainUi += this.ToggleMain;
@@ -61,6 +67,14 @@ namespace QuestoGraph.Manager
 
         public void ToggleMain(string? args)
         {
+#if DEBUG
+            if (args == "-1")
+            {
+                this.debugWindow.Toggle();
+                return;
+            }
+#endif
+
             if (string.IsNullOrWhiteSpace(args))
             {
                 args = null;
