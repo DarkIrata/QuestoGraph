@@ -39,6 +39,7 @@ namespace QuestoGraph.Windows
         private readonly QuestsManager questsManager;
         private readonly GraphBuilder graphBuilder;
         private readonly EventAggregator eventAggregator;
+        private readonly ImFontPtr font;
 
         private GeometryGraph? Graph { get; set; }
 
@@ -61,6 +62,8 @@ namespace QuestoGraph.Windows
             this.questsManager = questsManager;
             this.graphBuilder = new GraphBuilder();
             this.eventAggregator = eventAggregator;
+
+            this.font = ImGui.GetFont();
 
             this.SizeConstraints = new WindowSizeConstraints
             {
@@ -429,8 +432,7 @@ namespace QuestoGraph.Windows
                     drawList.AddRect(start - Vector2.One, end + Vector2.One, nodeBorder.Value, 5, ImDrawFlags.RoundCornersAll, 3.5f * this.zoomLevel);
                 }
 
-                var font = ImGui.GetFont();
-                drawList.AddText(font, font.FontSize * this.zoomLevel, start + GraphUtils.TextOffset, textColour, graphNode.Text);
+                drawList.AddText(this.font, this.font.FontSize * this.zoomLevel, start + GraphUtils.TextOffset, textColour, graphNode.Text);
             }
 
             return drawn;
