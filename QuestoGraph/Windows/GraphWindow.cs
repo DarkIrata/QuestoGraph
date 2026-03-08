@@ -39,12 +39,12 @@ namespace QuestoGraph.Windows
         private readonly QuestsManager questsManager;
         private readonly GraphBuilder graphBuilder;
         private readonly EventAggregator eventAggregator;
-        private readonly ImFontPtr font;
 
         private GeometryGraph? Graph { get; set; }
 
         private Node? CenterNode { get; set; }
 
+        private ImFontPtr font;
         private Vector2 dragOffset = Vector2.Zero;
         private float zoomLevel = 1f;
         private bool viewDrag = false;
@@ -62,8 +62,6 @@ namespace QuestoGraph.Windows
             this.graphBuilder = new GraphBuilder();
             this.eventAggregator = eventAggregator;
 
-            this.font = ImGui.GetFont();
-
             this.SizeConstraints = new WindowSizeConstraints
             {
                 MinimumSize = new Vector2(600, 600),
@@ -75,6 +73,7 @@ namespace QuestoGraph.Windows
         {
             base.OnOpen();
 
+            this.font = ImGui.GetFont();
             if (this.initialSelectedQuest == null)
             {
                 Plugin.Log.Warning("No Quest was selected..");
