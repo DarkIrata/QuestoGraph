@@ -440,7 +440,7 @@ namespace QuestoGraph.Windows
                 uint? nodeBorder = this.GetNodeBorderColor(graphNode.Id);
                 if (nodeBorder is not null)
                 {
-                    drawList.AddRect(start + Vector2.One, end - Vector2.One, Colors.Border, 5, ImDrawFlags.RoundCornersAll, 2.5f * this.zoomLevel);
+                    drawList.AddRect(start + Vector2.One, end - Vector2.One, nodeBorder ?? Colors.Border, 5, ImDrawFlags.RoundCornersAll, 2.5f * this.zoomLevel);
                 }
 
                 drawList.AddText(this.font, this.font.FontSize * this.zoomLevel, start + GraphUtils.TextOffset, textColour, graphNode.Text);
