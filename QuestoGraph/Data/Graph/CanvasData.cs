@@ -13,11 +13,14 @@ namespace QuestoGraph.Data.Graph
 
         public Vector2 Pivot { get; internal set; }
 
-        public CanvasData(Vector2 topleft, Vector2 bottomRight)
+        public Vector2 Size { get; }
+
+        public CanvasData(Vector2 topleft, Vector2 bottomRight, Vector2 size)
         {
             this.Topleft = topleft;
             this.BottomRight = bottomRight;
             this.Center = (topleft + bottomRight) * 0.5f;
+            this.Size = size;
         }
     }
 }

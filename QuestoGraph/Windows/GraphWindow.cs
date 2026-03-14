@@ -199,7 +199,7 @@ namespace QuestoGraph.Windows
             ImGui.BeginGroup();
 
             ImGui.InvisibleButton("##NodeEmpty", size);
-            var canvasData = new CanvasData(ImGui.GetItemRectMin(), ImGui.GetItemRectMax());
+            var canvasData = new CanvasData(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), size);
             canvasData.Pivot = canvasData.Center;
 
             if (this.CenterNode != null)
