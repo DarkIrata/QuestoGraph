@@ -228,85 +228,14 @@ namespace QuestoGraph.Windows
 
             if (ImGui.IsItemActive())
             {
-                if (ImGui.IsMouseDragging(ImGuiMouseButton.Left))
-                {
-                    var d = ImGui.GetMouseDragDelta();
-                    if (this.zoomLevel < 1f)
-                    {
-                        d /= (float)Math.Pow(this.zoomLevel, 1);
-                    }
-
-                    if (this.viewDrag)
-                    {
-                        var delta = d - this.lastDragPos;
-                        this.dragOffset -= delta;
-                    }
-
-                    this.viewDrag = true;
-                    this.lastDragPos = d;
-                }
-                else
-                {
-                    this.viewDrag = false;
-                }
+                this.HandleDrag();
             }
             else
             {
                 if (!this.viewDrag)
                 {
-                    var io = ImGui.GetIO();
-                    if (ImGui.IsWindowFocused() &&
-                        ImGui.IsWindowHovered(ImGuiHoveredFlags.ChildWindows) &&
-                        io.MouseWheel != 0)
-                    {
-                        if (io.MouseWheel < 0 && this.zoomLevel > MinZoomLevel)
-                        {
-                            this.zoomLevel -= ZoomLevelModifier;
-                        }
-                        else if (io.MouseWheel > 0 && this.zoomLevel < MaxZoomLevel)
-                        {
-                            this.zoomLevel += ZoomLevelModifier;
-                        }
-                    }
-
-                    var left = ImGui.IsMouseReleased(ImGuiMouseButton.Left);
-                    var middle = ImGui.IsMouseReleased(ImGuiMouseButton.Middle);
-                    var right = ImGui.IsMouseReleased(ImGuiMouseButton.Right);
-                    if (left || middle || right)
-                    {
-                        {
-                            var mousePos = ImGui.GetMousePos();
-                            foreach (var (start, end, id) in drawn)
-                            {
-                                var inBox = mousePos.X >= start.X && mousePos.X <= end.X && mousePos.Y >= start.Y && mousePos.Y <= end.Y;
-                                if (!inBox)
-                                {
-                                    continue;
-                                }
-
-                                if (left)
-                                {
-                                    //this.InfoWindows.Add(id);
-                                    if (this.questsManager.QuestData.TryGetValue(id, out var quest))
-                                    {
-                                        this.highlightedQuest = quest;
-                                        this.eventAggregator.Publish(new GraphQuestClicked(quest));
-                                    }
-                                }
-
-                                if (right)
-                                {
-                                    //unsafe
-                                    //{
-                                    //    AgentQuestJournal.Instance()->OpenForQuest(id, 1);
-                                    //}
-                                    Plugin.Log.Debug("RIGHT");
-                                }
-
-                                break;
-                            }
-                        }
-                    }
+                    this.HandleZoom();
+                    this.HandleClicks(drawn);
                 }
 
                 this.viewDrag = false;
@@ -314,6 +243,86 @@ namespace QuestoGraph.Windows
 
             drawList.PopClipRect();
             ImGui.EndGroup();
+        }
+
+        private void HandleDrag()
+        {
+            if (ImGui.IsMouseDragging(ImGuiMouseButton.Left))
+            {
+                var d = ImGui.GetMouseDragDelta();
+                if (this.zoomLevel < 1f)
+                {
+                    d /= (float)Math.Pow(this.zoomLevel, 1);
+                }
+
+                if (this.viewDrag)
+                {
+                    var delta = d - this.lastDragPos;
+                    this.dragOffset -= delta;
+                }
+
+                this.viewDrag = true;
+                this.lastDragPos = d;
+            }
+            else
+            {
+                this.viewDrag = false;
+            }
+        }
+
+        private void HandleZoom()
+        {
+            var io = ImGui.GetIO();
+            if (ImGui.IsWindowFocused() &&
+                ImGui.IsWindowHovered(ImGuiHoveredFlags.ChildWindows) &&
+                io.MouseWheel != 0)
+            {
+                if (io.MouseWheel < 0 && this.zoomLevel > MinZoomLevel)
+                {
+                    this.zoomLevel -= ZoomLevelModifier;
+                }
+                else if (io.MouseWheel > 0 && this.zoomLevel < MaxZoomLevel)
+                {
+                    this.zoomLevel += ZoomLevelModifier;
+                }
+            }
+        }
+
+        private void HandleClicks(List<(Vector2 Start, Vector2 End, uint id)> drawn)
+        {
+            var left = ImGui.IsMouseReleased(ImGuiMouseButton.Left);
+            var middle = ImGui.IsMouseReleased(ImGuiMouseButton.Middle);
+            var right = ImGui.IsMouseReleased(ImGuiMouseButton.Right);
+            if (left || middle || right)
+            {
+                {
+                    var mousePos = ImGui.GetMousePos();
+                    foreach (var (start, end, id) in drawn)
+                    {
+                        var inBox = mousePos.X >= start.X && mousePos.X <= end.X && mousePos.Y >= start.Y && mousePos.Y <= end.Y;
+                        if (!inBox)
+                        {
+                            continue;
+                        }
+
+                        if (left)
+                        {
+                            if (this.questsManager.QuestData.TryGetValue(id, out var quest))
+                            {
+                                this.highlightedQuest = quest;
+                                this.eventAggregator.Publish(new GraphQuestClicked(quest));
+                            }
+                        }
+
+                        if (right)
+                        {
+                            //Plugin.Log.Debug("RIGHT");
+                        }
+
+                        break;
+                    }
+                }
+            }
         }
 
         private void DrawEdges(ImDrawListPtr drawList, EdgeCollection edges, CanvasData canvasData)
