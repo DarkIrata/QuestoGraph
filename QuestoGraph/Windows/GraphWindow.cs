@@ -31,9 +31,12 @@ namespace QuestoGraph.Windows
         private const float GridSmallThickness = 1f;
         private const float GridLargeThickness = 2f;
         private const float GridZoomMultiplier = 1f;
-        private const float ZoomLevelModifier = 0.055f;
-        private const float MinZoomLevel = 0.125f;
+        private const float ZoomLevelModifier = 0.050f;
+        private const float DefaultZoomLevel = 1f;
+        private const float MinZoomLevel = 0.0150f;
         private const float MaxZoomLevel = 2f;
+        private static readonly Vector2 ActionButtonPadding = new(13, 5);
+        private static readonly Vector2 Text100Size = ImGui.CalcTextSize("100%");
 
         private readonly Config config;
         private readonly QuestsManager questsManager;
@@ -45,8 +48,9 @@ namespace QuestoGraph.Windows
         private Node? CenterNode { get; set; }
 
         private ImFontPtr font;
+        private Vector2 centerDragOffset = Vector2.Zero;
         private Vector2 dragOffset = Vector2.Zero;
-        private float zoomLevel = 1f;
+        private float zoomLevel = DefaultZoomLevel;
         private bool viewDrag = false;
         private Vector2 lastDragPos;
         private QuestData? initialSelectedQuest = null;
@@ -207,6 +211,7 @@ namespace QuestoGraph.Windows
                 var nodeCenter = this.CenterNode.Center.ToVector2();
                 var canvasCenter = canvasData.Center - canvasData.Topleft;
                 this.dragOffset = canvasCenter - nodeCenter;
+                this.centerDragOffset = this.dragOffset;
 
                 this.CenterNode = null;
             }
@@ -226,6 +231,8 @@ namespace QuestoGraph.Windows
             // Graph Border
             drawList.AddRect(canvasData.Topleft, canvasData.BottomRight, Colors.Border);
 
+            this.DrawActions(drawList, canvasData);
+
             if (ImGui.IsItemActive())
             {
                 this.HandleDrag();
@@ -243,6 +250,74 @@ namespace QuestoGraph.Windows
 
             drawList.PopClipRect();
             ImGui.EndGroup();
+        }
+
+        private void DrawActions(ImDrawListPtr drawList, CanvasData canvasData)
+        {
+            const float buttonOffset = 5f;
+
+            var pos = canvasData.BottomRight - new Vector2(145, 30);
+
+            var btnColor = ImGui.GetColorU32(ImGuiCol.Button);
+            var textColor = ImGui.GetColorU32(ImGuiCol.Text);
+
+            var minBtn = this.DrawCanvasButton(drawList, pos, "-", ActionButtonPadding, btnColor, textColor);
+            if (minBtn.Pressed)
+            {
+                this.DoZoom(false);
+            }
+
+            pos.X += minBtn.Size.X + (buttonOffset * 0.5f);
+            drawList.AddText(
+                new Vector2(pos.X - (Text100Size.X * 0.1f), pos.Y + 1f),
+                textColor,
+                $"{(this.zoomLevel / 2f * 200),5:F0}%"
+            );
+
+            pos.X += Text100Size.X + (buttonOffset * 1.5f);
+            var plusBtn = this.DrawCanvasButton(drawList, pos, "+", ActionButtonPadding, btnColor, textColor);
+            if (plusBtn.Pressed)
+            {
+                this.DoZoom(true);
+            }
+
+            pos.X += plusBtn.Size.X + buttonOffset;
+            var resetBtn = this.DrawCanvasButton(drawList, pos, "Reset", ActionButtonPadding, btnColor, textColor);
+            if (resetBtn.Pressed)
+            {
+                this.dragOffset = this.centerDragOffset;
+                this.zoomLevel = DefaultZoomLevel;
+            }
+        }
+
+        private (Vector2 Size, bool Pressed) DrawCanvasButton(
+            ImDrawListPtr drawList,
+            Vector2 pos,
+            string text,
+            Vector2 padding,
+            uint btnColor,
+            uint textColor)
+        {
+            var textSize = ImGui.CalcTextSize(text);
+            var size = textSize + padding;
+
+            var posMax = pos + size;
+            var hovered = ImGui.IsMouseHoveringRect(pos, posMax);
+
+            if (hovered)
+            {
+                btnColor = ImGui.GetColorU32(ImGuiCol.ButtonHovered);
+            }
+
+            var textPos = new Vector2(
+                pos.X + ((size.X - textSize.X) * 0.5f),
+                pos.Y + ((size.Y - textSize.Y) * 0.5f) - 1f
+            );
+
+            drawList.AddRectFilled(pos, posMax, btnColor, 4f);
+            drawList.AddText(textPos, textColor, text);
+
+            return (size, hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left));
         }
 
         private void HandleDrag()
@@ -277,15 +352,22 @@ namespace QuestoGraph.Windows
                 ImGui.IsWindowHovered(ImGuiHoveredFlags.ChildWindows) &&
                 io.MouseWheel != 0)
             {
-                if (io.MouseWheel < 0 && this.zoomLevel > MinZoomLevel)
-                {
-                    this.zoomLevel -= ZoomLevelModifier;
-                }
-                else if (io.MouseWheel > 0 && this.zoomLevel < MaxZoomLevel)
-                {
-                    this.zoomLevel += ZoomLevelModifier;
-                }
+                this.DoZoom(io.MouseWheel > 0);
             }
+        }
+
+        private void DoZoom(bool zoomIn)
+        {
+            if (zoomIn)
+            {
+                this.zoomLevel += ZoomLevelModifier;
+            }
+            else
+            {
+                this.zoomLevel -= ZoomLevelModifier;
+            }
+
+            this.zoomLevel = Math.Clamp(this.zoomLevel, MinZoomLevel, MaxZoomLevel);
         }
 
         private void HandleClicks(List<(Vector2 Start, Vector2 End, uint id)> drawn)
