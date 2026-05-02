@@ -138,17 +138,17 @@ namespace QuestoGraph.Windows
         private void DrawGeneralOption()
         {
             ImGuiUtils.SeperatorWithText("Info");
-            using (var indent = new ImRaii.Indent())
+            using (var indent = new ImRaii.IndentDisposable())
             {
-                indent.Push(1);
+                indent.Indent(1);
                 ImGui.TextUnformatted("Quests will be refreshed / reloaded");
                 ImGui.TextUnformatted("when you close settings.");
             }
 
             ImGuiUtils.SeperatorWithText("Language");
-            using (var indent = new ImRaii.Indent())
+            using (var indent = new ImRaii.IndentDisposable())
             {
-                indent.Push(1);
+                indent.Indent(1);
                 this.config.General.Language.QuestNames = this.Combobox("Quests", this.config.General.Language.QuestNames, Plugin.DataManager.Language, Enum.GetValues<ClientLanguage>());
                 this.config.General.Language.Rewards = this.Combobox("Rewards", this.config.General.Language.Rewards, Plugin.DataManager.Language, Enum.GetValues<ClientLanguage>());
                 this.config.General.Language.Instances = this.Combobox("Instances", this.config.General.Language.Instances, Plugin.DataManager.Language, Enum.GetValues<ClientLanguage>());
@@ -158,9 +158,9 @@ namespace QuestoGraph.Windows
         private void DrawFilterOption()
         {
             ImGuiUtils.SeperatorWithText("Display");
-            using (var indent = new ImRaii.Indent())
+            using (var indent = new ImRaii.IndentDisposable())
             {
-                indent.Push(1);
+                indent.Indent(1);
                 this.config.Display.ShowMSQQuests = this.Checkbox("MSQ Quests", this.config.Display.ShowMSQQuests);
                 this.config.Display.ShowNormalQuests = this.Checkbox("Normal Quests", this.config.Display.ShowNormalQuests);
                 this.config.Display.ShowBlueQuests = this.Checkbox("Blue Quests", this.config.Display.ShowBlueQuests);
@@ -171,9 +171,9 @@ namespace QuestoGraph.Windows
             }
 
             ImGuiUtils.SeperatorWithText("Search");
-            using (var indent = new ImRaii.Indent())
+            using (var indent = new ImRaii.IndentDisposable())
             {
-                indent.Push(1);
+                indent.Indent(1);
                 this.config.Search.IncludeItems = this.Checkbox("Include Items", this.config.Search.IncludeItems);
                 this.config.Search.IncludeEmotes = this.Checkbox("Include Emotes", this.config.Search.IncludeEmotes);
                 this.config.Search.IncludeInstances = this.Checkbox("Include Instances", this.config.Search.IncludeInstances);
@@ -185,9 +185,9 @@ namespace QuestoGraph.Windows
         {
             ImGuiUtils.SeperatorWithText("Sidebar");
 
-            using (var indent = new ImRaii.Indent())
+            using (var indent = new ImRaii.IndentDisposable())
             {
-                indent.Push(1);
+                indent.Indent(1);
                 this.config.Colors.SidebarDefaultColor = this.ColorEdit("Default Quest", "DefaultQuest", this.config.Colors.SidebarDefaultColor, this.backupConfig.Colors.SidebarDefaultColor);
                 //this.config.Colors.SidebarCompletedColor = this.ColorEdit("Completed Quest", "DoneQuest", this.config.Colors.SidebarCompletedColor, this.backupConfig.Colors.SidebarCompletedColor);
 
@@ -199,9 +199,9 @@ namespace QuestoGraph.Windows
             }
 
             ImGuiUtils.SeperatorWithText("Graph");
-            using (var indent = new ImRaii.Indent())
+            using (var indent = new ImRaii.IndentDisposable())
             {
-                indent.Push(1);
+                indent.Indent(1);
                 this.config.Colors.GraphDefaultBackgroundColor = this.ColorEdit("Default", "GraphDefault", this.config.Colors.GraphDefaultBackgroundColor, this.backupConfig.Colors.GraphDefaultBackgroundColor);
                 this.config.Colors.GraphMSQBackgroundColor = this.ColorEdit("MSQ Quest", "GraphMSQ", this.config.Colors.GraphMSQBackgroundColor, this.backupConfig.Colors.GraphMSQBackgroundColor);
                 this.config.Colors.GraphBlueBackgroundColor = this.ColorEdit("Blue Quest", "GraphBlue", this.config.Colors.GraphBlueBackgroundColor, this.backupConfig.Colors.GraphBlueBackgroundColor);
@@ -214,9 +214,9 @@ namespace QuestoGraph.Windows
         private void DrawGraphOption()
         {
             ImGuiUtils.SeperatorWithText("Display");
-            using (var indent = new ImRaii.Indent())
+            using (var indent = new ImRaii.IndentDisposable())
             {
-                indent.Push(1);
+                indent.Indent(1);
                 this.config.Graph.CompressMSQ = this.Checkbox("Compress MSQ Quests", this.config.Graph.CompressMSQ);
                 this.config.Graph.ShowArrowheads = this.Checkbox("Show Arrowheads", this.config.Graph.ShowArrowheads);
             }

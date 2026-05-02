@@ -95,7 +95,7 @@ namespace QuestoGraph.Windows
                     }
 
                     ImGui.Separator();
-                    using (var color = new ImRaii.Color())
+                    using (var color = new ImRaii.ColorDisposable())
                     {
                         // i stole the idea from marketboard plugin. Sorry D:
                         //const uint baseColor = 0x003440ebu;
@@ -186,9 +186,9 @@ namespace QuestoGraph.Windows
                 {
                     if (child.Success)
                     {
-                        using (var indent = new ImRaii.Indent())
+                        using (var indent = new ImRaii.IndentDisposable())
                         {
-                            indent.Push();
+                            indent.Indent();
                             this.ListLinkedQuests(questData.PreviousQuestsId, "-prev");
                         }
                     }
@@ -209,9 +209,9 @@ namespace QuestoGraph.Windows
                 {
                     if (child.Success)
                     {
-                        using (var indent = new ImRaii.Indent())
+                        using (var indent = new ImRaii.IndentDisposable())
                         {
-                            indent.Push();
+                            indent.Indent();
                             this.ListLinkedQuests(questData.NextQuestIds, "-next");
                         }
                     }

@@ -69,9 +69,9 @@ namespace QuestoGraph.Utils
         internal static void WriteTitledText(string title, string? text, int depth = 1)
         {
             ImGui.TextUnformatted(title);
-            using (var indent = new ImRaii.Indent())
+            using (var indent = new ImRaii.IndentDisposable())
             {
-                indent.Push(depth);
+                indent.Indent(depth);
                 ImGui.TextUnformatted(text ?? string.Empty);
             }
         }
@@ -151,7 +151,7 @@ namespace QuestoGraph.Utils
 
         internal static bool SelectableQuest(ColorSettings colorSettings, QuestData questData, string? nameSuffix, ref bool isSelected)
         {
-            using (var color = new ImRaii.Color())
+            using (var color = new ImRaii.ColorDisposable())
             {
                 var targetColor = questData.QuestType switch
                 {
