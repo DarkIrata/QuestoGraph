@@ -383,7 +383,13 @@ namespace QuestoGraph.Windows
 
         private void DrawQuestMeta(QuestData questData)
         {
-            ImGuiUtils.AddIcon(questData.Quest.EventIconType.Value.NpcIconAvailable + 1, 48, 48, setSameLine: true);
+            uint questIcon = 71221; // default normal Quest icon. Maybe change that?
+            if (questData.Quest.EventIconType.TryGetValue(out var row))
+            {
+                questIcon = row.NpcIconAvailable + 1;
+            }
+
+            ImGuiUtils.AddIcon(questIcon, 48, 48, setSameLine: true);
 
             var journalText = questData.Quest.JournalGenre.IsValid ? questData.Quest.JournalGenre.Value.Name.ExtractText() : string.Empty;
             var levelReqAndName = $"(Lvl: {questData.Quest.ClassJobLevel[0]}) {questData!.Name}";
