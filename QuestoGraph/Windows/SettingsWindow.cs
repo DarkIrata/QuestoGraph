@@ -65,7 +65,7 @@ namespace QuestoGraph.Windows
             Plugin.Log.Info("Saving configuration");
             Plugin.Interface.SavePluginConfig(this.config);
 
-            this.questsManager.ReInitialize();
+            //this.questsManager.ReInitialize();
 
             if (this.config.Graph.ShowArrowheads != this.oldShowArrowheads ||
                 this.config.Graph.CompressMSQ != this.oldCompressMSQ)
@@ -143,6 +143,13 @@ namespace QuestoGraph.Windows
                 indent.Indent(1);
                 ImGui.TextUnformatted("Quests will be refreshed / reloaded");
                 ImGui.TextUnformatted("when you close settings.");
+            }
+
+            ImGuiUtils.SeperatorWithText("Display");
+            using (var indent = new ImRaii.IndentDisposable())
+            {
+                indent.Indent(1);
+                this.config.General.ShowQuestId = this.Checkbox("Show Quest Id", this.config.General.ShowQuestId);
             }
 
             ImGuiUtils.SeperatorWithText("Language");

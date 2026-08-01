@@ -62,7 +62,7 @@ namespace QuestoGraph.Manager
             Plugin.Log.Info($"Initializing Quests..");
             this.CurrentState = State.Initializing;
             var result = new Dictionary<uint, QuestData>();
-            foreach (var quest in Plugin.DataManager.GetExcelSheet<Quest>(this.config.General.Language.QuestNames))
+            foreach (var quest in Plugin.DataManager.GetExcelSheet<Quest>(Dalamud.Game.ClientLanguage.English))
             {
                 if (string.IsNullOrEmpty(quest.Name.ExtractText()) ||
                     result.ContainsKey(quest.RowId))
@@ -70,7 +70,12 @@ namespace QuestoGraph.Manager
                     continue;
                 }
 
-                var questData = new QuestData(quest, this.config.General.Language);
+                var questDataEn = new QuestDataLocalized(quest, Dalamud.Game.ClientLanguage.English);
+                var questDataDe = new QuestDataLocalized(quest.RowId, Dalamud.Game.ClientLanguage.German);
+                var questDataFr = new QuestDataLocalized(quest.RowId, Dalamud.Game.ClientLanguage.French);
+                var questDataJp = new QuestDataLocalized(quest.RowId, Dalamud.Game.ClientLanguage.Japanese);
+
+                var questData = new QuestData(this.config.General.Language, questDataEn, questDataDe, questDataFr, questDataJp);
                 result.Add(questData.RowId, questData);
             }
 
@@ -85,14 +90,14 @@ namespace QuestoGraph.Manager
 
             sw.Stop();
             this.CurrentState = State.Initialized;
-            Plugin.Log.Info($"{this.QuestData.Count} Quests loaded - {sw.Elapsed}");
+            Plugin.Log.Info($"{this.QuestData.Count} (Total: {this.QuestData.Count * 4})  Quests loaded - {sw.Elapsed}");
         }
 
         // We run even at the start through it, so given settings would apply on load
         public IEnumerable<QuestData> GetFilteredList(string filter)
         {
             if (this.CurrentState != State.Initialized ||
-            (this.filteredQuestData != null && string.Equals(filter, this.lastFilter, StringComparison.InvariantCultureIgnoreCase)))
+                (this.filteredQuestData != null && string.Equals(filter, this.lastFilter, StringComparison.InvariantCultureIgnoreCase)))
             {
                 return this.filteredQuestData ?? Array.Empty<QuestData>();
             }

@@ -1,4 +1,5 @@
-﻿using Lumina.Excel.Sheets;
+﻿using Dalamud.Game;
+using Lumina.Excel.Sheets;
 using QuestoGraph.Data.Settings;
 using QuestoGraph.Enums;
 
@@ -6,17 +7,25 @@ namespace QuestoGraph.Data
 {
     internal class QuestData
     {
-        public uint RowId => this.Quest.RowId;
+        public QuestDataLocalized QuestDataEn { get; }
 
-        public string Name => this.Quest.Name.ExtractText();
+        public QuestDataLocalized QuestDataDe { get; }
 
-        public Quest Quest { get; }
+        public QuestDataLocalized QuestDataFr { get; }
 
-        public QuestTypes QuestType { get; }
+        public QuestDataLocalized QuestDataJp { get; }
 
-        public uint GilReward => this.Quest.GilReward;
+        public uint RowId => this.QuestDataEn.RowId;
 
-        public bool HasEmoteReward => this.Quest.EmoteReward.RowId != 0;
+        public string Name => this.GetLocalizedQuestData(this.languageSettings.QuestNames).Name;
+
+        public Quest Quest => this.GetLocalizedQuestData(this.languageSettings.QuestNames).Quest;
+
+        public QuestTypes QuestType => this.QuestDataEn.QuestType;
+
+        public uint GilReward => this.QuestDataEn.GilReward;
+
+        public bool HasEmoteReward => this.QuestDataEn.Quest.EmoteReward.RowId != 0;
 
         public Emote Emote => this.Quest.EmoteReward.Value;
 
@@ -26,135 +35,53 @@ namespace QuestoGraph.Data
 
         public bool HasGeneralActionRewards => this.GeneralActions.Count != 0;
 
-        public IReadOnlyList<GeneralActionData> GeneralActions { get; } = [];
+        public IReadOnlyList<GeneralActionData> GeneralActions => this.GetLocalizedQuestData(this.languageSettings.Rewards).GeneralActions;
 
-        public ItemRewardsData ItemRewards { get; }
+        public ItemRewardsData ItemRewards => this.GetLocalizedQuestData(this.languageSettings.Rewards).ItemRewards;
 
         public bool HasInstanceUnlocks => this.InstanceUnlocks.Count != 0;
 
-        public IReadOnlyList<InstanceData> InstanceUnlocks { get; } = [];
+        public IReadOnlyList<InstanceData> InstanceUnlocks => this.GetLocalizedQuestData(this.languageSettings.Instances).InstanceUnlocks;
 
-        public bool HasBeastTribeUnlock => this.Quest.BeastTribe.RowId != 0 && !this.Quest.IsRepeatable && this.Quest.BeastReputationRank.RowId == 0;
+        public bool HasBeastTribeUnlock => this.QuestDataEn.BeastTribe.RowId != 0 && !this.QuestDataEn.Quest.IsRepeatable && this.QuestDataEn.Quest.BeastReputationRank.RowId == 0;
 
         public BeastTribe BeastTribe => this.Quest.BeastTribe.Value;
 
         public bool HasJobUnlock => this.JobUnlock.RowId != 0;
 
-        public ClassJob JobUnlock { get; }
+        public ClassJob JobUnlock => this.GetLocalizedQuestData(this.languageSettings.Rewards).JobUnlock;
 
-        public IReadOnlyList<uint> PreviousQuestsId { get; private set; } = [];
+        public IReadOnlyList<uint> PreviousQuestsId => this.GetLocalizedQuestData(this.languageSettings.QuestNames).PreviousQuestsId;
 
-        public IReadOnlyList<uint> NextQuestIds { get; private set; } = [];
+        public IReadOnlyList<uint> NextQuestIds => this.GetLocalizedQuestData(this.languageSettings.QuestNames).NextQuestIds;
 
-        // Unkown12 == true => Unreachable? Dupliacte??
-        // It looks like a Quest Replaced / Discontinued flag. Every entry currently set by this, was not reachable
-        // from what i could see
-        public bool IsReachable => !this.Quest.Unknown12 || (!this.Quest.IssuerLocation.IsValid && this.Quest.IssuerLocation.RowId != 0);
+        public bool IsReachable => this.GetLocalizedQuestData(this.languageSettings.QuestNames).IsReachable;
 
         private readonly LanguageSettings languageSettings;
 
-        public QuestData(Quest quest, LanguageSettings languageSettings)
+        public QuestData(LanguageSettings languageSettings, QuestDataLocalized questDataEn, QuestDataLocalized questDataDe, QuestDataLocalized questDataFr, QuestDataLocalized questDataJp)
         {
-            this.Quest = quest;
             this.languageSettings = languageSettings;
-            this.QuestType = quest.EventIconType.RowId switch
-            {
-                3 => QuestTypes.MSQ,
-                8 => QuestTypes.Blue,
-                10 => QuestTypes.Blue,
-                _ => QuestTypes.Normal,
-            };
-
-            this.SetPreviousQuests();
-
-            this.ItemRewards = new ItemRewardsData(quest, this.languageSettings.Rewards);
-
-            this.GeneralActions = quest.GeneralActionReward
-                .Where(ga => ga.IsValid && ga.RowId != 0)
-                .Select(ga => new GeneralActionData(ga.Value))
-                .ToList();
-
-            this.InstanceUnlocks = this.ParseInstanceUnlocks(quest);
-            this.JobUnlock = this.ParseJobUnlock(quest);
+            this.QuestDataEn = questDataEn;
+            this.QuestDataDe = questDataDe;
+            this.QuestDataFr = questDataFr;
+            this.QuestDataJp = questDataJp;
         }
 
-        private void SetPreviousQuests()
+        private QuestDataLocalized GetLocalizedQuestData(ClientLanguage language) => language switch
         {
-            if (this.Quest.PreviousQuest.Count > 0)
-            {
-                var prevQuests = new List<uint>();
-                prevQuests.AddRange(this.Quest.PreviousQuest.Where(pq => pq.IsValid && pq.RowId != 0).Select(pq => pq.RowId));
-
-                if (this.RowId == 69186) // "The Light of Inspiration" requires Role Quests
-                {
-                    Plugin.Log.Debug("Adding 'The Light of Inspiration' Role Quests as previous");
-
-                    prevQuests.Add(68784);
-                    prevQuests.Add(68814);
-                    prevQuests.Add(69164);
-                    prevQuests.Add(68808);
-                }
-
-                this.PreviousQuestsId = prevQuests;
-            }
-        }
-
-        private ClassJob ParseJobUnlock(Quest quest)
-        {
-            const string ClassJobScriptInstruct = "CLASSJOB";
-            if (quest.QuestParams.Any(param => param.ScriptInstruction.ExtractText().Contains(ClassJobScriptInstruct)))
-            {
-                var classParam = quest.QuestParams.FirstOrDefault(param => param.ScriptInstruction.ExtractText().StartsWith(ClassJobScriptInstruct));
-                try
-                {
-                    return Plugin.DataManager.GetExcelSheet<ClassJob>()!.GetRow(classParam.ScriptArg);
-                }
-                catch
-                {
-                    Plugin.Log.Error($"Failed parsing {nameof(this.JobUnlock)} for quest ({this.RowId}) {this.Name}");
-                }
-            }
-            else if (this.ItemRewards.HasOtherItemReward &&
-                (this.ItemRewards.OtherItem!.RowId <= 16 && this.ItemRewards.OtherItem!.RowId >= 10)) // ../csv/QuestRewardOther.csv
-            {
-                // To get older classes, we check the other reward to find the soul stone.
-                // We cant trust the naming, since ClientLanguage Settings could become a feature...
-                // Also Other Items do different RowIds..... 
-                var item = Plugin.DataManager.GetExcelSheet<Item>(this.languageSettings.Rewards)!.FirstOrDefault(i => i.Icon == this.ItemRewards.OtherItem.Icon);
-                if (item.ClassJobUse.RowId != 0)
-                {
-                    return item.ClassJobUse.Value;
-                }
-            }
-
-            return default;
-        }
-
-        private List<InstanceData> ParseInstanceUnlocks(Quest quest)
-        {
-            var instanceUnlocks = new List<InstanceData>();
-            if (!quest.IsRepeatable) // Parse Instance Unlocks
-            {
-                const string InstanceScriptInstruct = "INSTANCEDUNGEON";
-
-                instanceUnlocks.AddRange(quest.QuestParams
-                    .Where(param => param.ScriptInstruction.ExtractText().Contains(InstanceScriptInstruct))
-                    .Select(qp => new InstanceData(qp, this.languageSettings.Instances)));
-
-                if (quest.InstanceContentUnlock.RowId != 0 && !instanceUnlocks.Any(iu => iu.ContentRowId == quest.InstanceContentUnlock.RowId))
-                {
-                    instanceUnlocks.Add(new InstanceData(quest.InstanceContentUnlock.RowId, this.languageSettings.Instances));
-                }
-            }
-
-            return instanceUnlocks;
-        }
+            ClientLanguage.Japanese => this.QuestDataJp,
+            ClientLanguage.German => this.QuestDataDe,
+            ClientLanguage.French => this.QuestDataFr,
+            _ => this.QuestDataEn,
+        };
 
         internal void AppendNextQuests(IEnumerable<uint> nextQuests)
         {
-            var temp = this.NextQuestIds.ToList();
-            temp.AddRange(nextQuests);
-            this.NextQuestIds = temp;
+            this.QuestDataEn.AppendNextQuests(nextQuests);
+            this.QuestDataDe.AppendNextQuests(nextQuests);
+            this.QuestDataFr.AppendNextQuests(nextQuests);
+            this.QuestDataJp.AppendNextQuests(nextQuests);
         }
     }
 }
