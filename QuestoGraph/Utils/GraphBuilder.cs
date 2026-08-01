@@ -110,7 +110,7 @@ namespace QuestoGraph.Utils
                             if (!string.IsNullOrEmpty(result.CompressedName))
                             {
                                 this.Log($"Compressed Quest '{result.CompressedName}' (ID: {result.QuestId}) || Parent '{currentQuestData.Name}'- '{sw?.Elapsed}'");
-                                var compressedMSQNode = GraphUtils.GetNode(new NodeData(prevId, result.CompressedName));
+                                var compressedMSQNode = GraphUtils.GetNode(new NodeData(currentQuestData.RowId, result.CompressedName));
                                 nodes[id] = (compressedMSQNode, Side.Backward);
                                 continue;
                             }
