@@ -84,6 +84,17 @@ namespace QuestoGraph.Data
             {
                 var prevQuests = new List<uint>();
                 prevQuests.AddRange(this.Quest.PreviousQuest.Where(pq => pq.IsValid && pq.RowId != 0).Select(pq => pq.RowId));
+
+                if (this.RowId == 69186) // "The Light of Inspiration" requires Role Quests
+                {
+                    Plugin.Log.Debug("Adding 'The Light of Inspiration' Role Quests as previous");
+
+                    prevQuests.Add(68784);
+                    prevQuests.Add(68814);
+                    prevQuests.Add(69164);
+                    prevQuests.Add(68808);
+                }
+
                 this.PreviousQuestsId = prevQuests;
             }
         }
