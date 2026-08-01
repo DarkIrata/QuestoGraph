@@ -361,7 +361,14 @@ namespace QuestoGraph.Windows
         {
             if (zoomIn)
             {
-                this.zoomLevel += ZoomLevelModifier;
+                if (this.zoomLevel == MinZoomLevel)
+                {
+                    this.zoomLevel = ZoomLevelModifier;
+                }
+                else
+                {
+                    this.zoomLevel += ZoomLevelModifier;
+                }
             }
             else
             {
