@@ -22,7 +22,7 @@ namespace QuestoGraph.Windows
             internal static readonly uint Background = ImGui.ColorConvertFloat4ToU32(new Vector4(0.13f, 0.13f, 0.13f, 1));
             internal static readonly uint Border = ImGui.ColorConvertFloat4ToU32(new Vector4(0.3f, 0.3f, 0.3f, 1));
             internal static readonly uint Text = ImGui.ColorConvertFloat4ToU32(new Vector4(0.9f, 0.9f, 0.9f, 1));
-            internal static readonly uint Line = ImGui.ColorConvertFloat4ToU32(new Vector4(0.7f, 0.7f, 0.7f, 1));
+            //internal static readonly uint Line = ImGui.ColorConvertFloat4ToU32(new Vector4(0.7f, 0.7f, 0.7f, 1));
             internal static readonly uint Grid = ImGui.ColorConvertFloat4ToU32(new Vector4(0.1f, 0.1f, 0.1f, 1));
         }
 
@@ -56,6 +56,7 @@ namespace QuestoGraph.Windows
         private QuestData? initialSelectedQuest = null;
         private QuestData? lastInitialSelectedQuest = null;
         private QuestData? highlightedQuest = null;
+        private DrawnNode? highlightedNode = null;
         private CancellationTokenSource? calcCancellationTokenSource = null;
 
         public GraphWindow(Config config, QuestsManager questsManager, EventAggregator eventAggregator)
@@ -370,7 +371,7 @@ namespace QuestoGraph.Windows
             this.zoomLevel = Math.Clamp(this.zoomLevel, MinZoomLevel, MaxZoomLevel);
         }
 
-        private void HandleClicks(List<(Vector2 Start, Vector2 End, uint id)> drawn)
+        private void HandleClicks(List<DrawnNode> drawnNodes)
         {
             var left = ImGui.IsMouseReleased(ImGuiMouseButton.Left);
             var middle = ImGui.IsMouseReleased(ImGuiMouseButton.Middle);
@@ -379,26 +380,32 @@ namespace QuestoGraph.Windows
             {
                 {
                     var mousePos = ImGui.GetMousePos();
-                    foreach (var (start, end, id) in drawn)
+                    foreach (var drawnNode in drawnNodes)
                     {
-                        var inBox = mousePos.X >= start.X && mousePos.X <= end.X && mousePos.Y >= start.Y && mousePos.Y <= end.Y;
+                        var inBox = mousePos.X >= drawnNode.Start.X && mousePos.X <= drawnNode.End.X && mousePos.Y >= drawnNode.Start.Y && mousePos.Y <= drawnNode.End.Y;
                         if (!inBox)
                         {
                             continue;
                         }
 
-                        if (left)
+                        if (drawnNode.Node is not null)
                         {
-                            if (this.questsManager.QuestData.TryGetValue(id, out var quest))
+                            if (left)
                             {
-                                this.highlightedQuest = quest;
-                                this.eventAggregator.Publish(new GraphQuestClicked(quest));
+                                if (drawnNode.TryGetNodeData<NodeData>(out var nodeData) &&
+                                    nodeData?.QuestData is not null &&
+                                    this.questsManager.QuestData.TryGetValue(nodeData.QuestData.RowId, out var quest))
+                                {
+                                    this.highlightedNode = drawnNode;
+                                    this.highlightedQuest = quest;
+                                    this.eventAggregator.Publish(new GraphQuestClicked(quest));
+                                }
                             }
-                        }
 
-                        if (right)
-                        {
-                            //Plugin.Log.Debug("RIGHT");
+                            if (right)
+                            {
+                                //Plugin.Log.Debug("RIGHT");
+                            }
                         }
 
                         break;
@@ -409,19 +416,25 @@ namespace QuestoGraph.Windows
 
         private void DrawEdges(ImDrawListPtr drawList, EdgeCollection edges, CanvasData canvasData)
         {
-            void DrawNodeLine(LineSegment line)
+            void DrawNodeLine(uint color, LineSegment line)
             {
                 var start = this.ConvertDrawPointPivoted(canvasData, line.End);
                 var end = this.ConvertDrawPointPivoted(canvasData, line.Start);
 
-                drawList.AddLine(start, end, Colors.Line, 3f * this.zoomLevel);
+                drawList.AddLine(start, end, color, 3f * this.zoomLevel);
             }
 
             foreach (var edge in edges)
             {
+                var color = ImGui.GetColorU32(this.config.Colors.GraphLineColor);
+                if (this.highlightedNode?.Node.Edges.Contains(edge) == true)
+                {
+                    color = ImGui.GetColorU32(this.config.Colors.GraphLineSelectedColor);
+                }
+
                 if (edge.Curve is LineSegment line)
                 {
-                    DrawNodeLine(line);
+                    DrawNodeLine(color, line);
                 }
                 else if (edge.Curve is Curve curve)
                 {
@@ -429,7 +442,7 @@ namespace QuestoGraph.Windows
                     {
                         if (seg is LineSegment curveLine)
                         {
-                            DrawNodeLine(curveLine);
+                            DrawNodeLine(color, curveLine);
                         }
                         else if (seg is CubicBezierSegment cs)
                         {
@@ -438,7 +451,7 @@ namespace QuestoGraph.Windows
                                 this.ConvertDrawPointPivoted(canvasData, cs.B(1)),
                                 this.ConvertDrawPointPivoted(canvasData, cs.B(2)),
                                 this.ConvertDrawPointPivoted(canvasData, cs.B(3)),
-                                Colors.Line,
+                                color,
                                 3f * this.zoomLevel
                             );
                         }
@@ -450,7 +463,8 @@ namespace QuestoGraph.Windows
                     this.DrawArrow(
                         drawList,
                         this.ConvertDrawPointPivoted(canvasData, edge.Curve.End),
-                        this.ConvertDrawPointPivoted(canvasData, edge.EdgeGeometry.TargetArrowhead.TipPosition)
+                        this.ConvertDrawPointPivoted(canvasData, edge.EdgeGeometry.TargetArrowhead.TipPosition),
+                        color
                     );
                 }
             }
@@ -465,7 +479,7 @@ namespace QuestoGraph.Windows
         private Vector2 ConvertDrawPointPivoted(Vector2 corner, Vector2 pivot, Vector2 point)
             => pivot + ((pivot - ((corner + point) + this.dragOffset)) * this.zoomLevel);
 
-        private void DrawArrow(ImDrawListPtr drawList, Vector2 start, Vector2 end)
+        private void DrawArrow(ImDrawListPtr drawList, Vector2 start, Vector2 end, uint color)
         {
             const float arrowAngle = 30f;
             var dir = end - start;
@@ -479,23 +493,23 @@ namespace QuestoGraph.Windows
                 start + s,
                 end,
                 start - s,
-                Colors.Line
+                color
             );
         }
 
-        private List<(Vector2 Start, Vector2 End, uint id)> DrawNodes(
+        private List<DrawnNode> DrawNodes(
             ImDrawListPtr drawList,
             IList<Node> nodes,
             CanvasData canvasData)
         {
-            var drawn = new List<(Vector2, Vector2, uint)>();
+            var drawn = new List<DrawnNode>();
 
             foreach (var node in nodes)
             {
                 var start = this.ConvertDrawPointPivoted(canvasData, node.GetTopLeft(Vector2.Zero));
 
                 if (this.IsHidden(canvasData.Topleft, canvasData.BottomRight, node, start) ||
-                    node.UserData is not NodeData graphNode)
+                    node.UserData is not NodeData graphNodeData)
                 {
                     continue;
                 }
@@ -503,9 +517,9 @@ namespace QuestoGraph.Windows
                 var backgroundColor = this.config.Colors.GraphDefaultBackgroundColor;
                 var textColour = Colors.Text;
 
-                if (graphNode?.QuestData != null)
+                if (graphNodeData?.QuestData != null)
                 {
-                    backgroundColor = graphNode.QuestData.QuestType switch
+                    backgroundColor = graphNodeData.QuestData.QuestType switch
                     {
                         Enums.QuestTypes.Normal => this.config.Colors.GraphDefaultBackgroundColor,
                         Enums.QuestTypes.MSQ => this.config.Colors.GraphMSQBackgroundColor,
@@ -513,7 +527,7 @@ namespace QuestoGraph.Windows
                         _ => this.config.Colors.GraphDefaultBackgroundColor,
                     };
 
-                    if (QuestManager.IsQuestComplete(graphNode.QuestData.RowId))
+                    if (QuestManager.IsQuestComplete(graphNodeData.QuestData.RowId))
                     {
                         backgroundColor.W = .5f;
                         textColour = (uint)((0x80 << 24) | (textColour & 0xFFFFFF));
@@ -521,20 +535,20 @@ namespace QuestoGraph.Windows
                 }
 
                 var end = this.ConvertDrawPointPivoted(canvasData, node.GetBottomRight(Vector2.Zero));
-                drawn.Add((start, end, graphNode!.Id));
+                drawn.Add(new DrawnNode(start, end, node));
                 drawList.AddRectFilled(start, end, ImGui.GetColorU32(backgroundColor), 5, ImDrawFlags.RoundCornersAll);
-                if (graphNode.Id == (this.initialSelectedQuest?.RowId ?? 0) ||
-                    graphNode.Id == (this.highlightedQuest?.RowId ?? 0))
+                if (graphNodeData!.Id == (this.initialSelectedQuest?.RowId ?? 0) ||
+                    graphNodeData!.Id == (this.highlightedQuest?.RowId ?? 0))
                 {
                 }
 
-                uint? nodeBorder = this.GetNodeBorderColor(graphNode.Id);
+                uint? nodeBorder = this.GetNodeBorderColor(graphNodeData.Id);
                 if (nodeBorder is not null)
                 {
                     drawList.AddRect(start + Vector2.One, end - Vector2.One, nodeBorder ?? Colors.Border, 5, ImDrawFlags.RoundCornersAll, 2.5f * this.zoomLevel);
                 }
 
-                drawList.AddText(this.font, this.font.FontSize * this.zoomLevel, start + GraphUtils.TextOffset, textColour, graphNode.Text);
+                drawList.AddText(this.font, this.font.FontSize * this.zoomLevel, start + GraphUtils.TextOffset, textColour, graphNodeData.Text);
             }
 
             return drawn;

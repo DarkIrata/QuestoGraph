@@ -208,6 +208,9 @@ namespace QuestoGraph.Windows
 
                 this.config.Colors.GraphInitialQuestBorder = this.ColorEdit("Initial Quest Border", "GraphInitialQBorder", this.config.Colors.GraphInitialQuestBorder, this.backupConfig.Colors.GraphInitialQuestBorder);
                 this.config.Colors.GraphHighlightedQuestBorder = this.ColorEdit("Highlighted Quest Border", "GraphHighlightedQBorder", this.config.Colors.GraphHighlightedQuestBorder, this.backupConfig.Colors.GraphHighlightedQuestBorder);
+
+                this.config.Colors.GraphLineColor = this.ColorEdit("Line", "GraphLineColor", this.config.Colors.GraphLineColor, this.backupConfig.Colors.GraphLineColor);
+                this.config.Colors.GraphLineSelectedColor = this.ColorEdit("Highlighted Line", "GraphLineSelectedColor", this.config.Colors.GraphLineSelectedColor, this.backupConfig.Colors.GraphLineSelectedColor);
             }
         }
 

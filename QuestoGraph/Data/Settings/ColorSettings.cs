@@ -25,5 +25,9 @@ namespace QuestoGraph.Data.Settings
         public Vector4 GraphInitialQuestBorder { get; set; } = new Vector4(0.492F, 0.492f, 0.5f, 1f);
 
         public Vector4 GraphHighlightedQuestBorder { get; set; } = new Vector4(0.984f, 0.984f, 0.984f, 1f);
+
+        public Vector4 GraphLineColor { get; set; } = new Vector4(0.7f, 0.7f, 0.7f, 1f);
+
+        public Vector4 GraphLineSelectedColor { get; set; } = new Vector4(0.984f, 0.984f, 0.984f, 1f);
     }
 }

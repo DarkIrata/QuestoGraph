@@ -12,7 +12,12 @@ namespace QuestoGraph.Utils
 {
     internal class GraphBuilder
     {
-        private readonly LayoutAlgorithmSettings LayoutSettings = new SugiyamaLayoutSettings();
+        private readonly LayoutAlgorithmSettings LayoutSettings = new SugiyamaLayoutSettings()
+        {
+            AspectRatio = 2.0,
+            BrandesThreshold = 0,
+            RepetitionCoefficientForOrdering = 20
+        };
 
         private bool newStopwatch = false;
 
@@ -82,7 +87,7 @@ namespace QuestoGraph.Utils
             var nodes = new Dictionary<uint, (Node Node, Side Side)>();
             var stack = new Stack<(uint id, Side side)>();
 
-            this.Log($"Determined Nodes - '{sw.Elapsed}'");
+            this.Log($"Determining Nodes - '{sw.Elapsed}'");
             stack.Push((startQuestData.RowId, Side.Start));
             while (stack.Count > 0)
             {
