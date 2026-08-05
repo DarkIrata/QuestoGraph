@@ -107,7 +107,7 @@ namespace QuestoGraph.Manager
 
             bool IsPrefiltered(QuestData data) // Filtered through basic Configuration
             {
-                if (this.SearchFilter.UseSettingsPrefilter)
+                if (!this.SearchFilter.UseSettingsPrefilter)
                 {
                     return false;
                 }
