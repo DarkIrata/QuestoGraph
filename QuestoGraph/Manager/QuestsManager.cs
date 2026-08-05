@@ -65,7 +65,7 @@ namespace QuestoGraph.Manager
             Plugin.Log.Info("Initializing Quests..");
             this.CurrentState = State.Initializing;
             var result = new Dictionary<uint, QuestData>();
-            foreach (var quest in Plugin.DataManager.GetExcelSheet<Quest>(Dalamud.Game.ClientLanguage.English))
+            foreach (var quest in Plugin.DataManager.GetExcelSheet<Quest>(ClientLanguage.English))
             {
                 if (string.IsNullOrEmpty(quest.Name.ExtractText()) ||
                     result.ContainsKey(quest.RowId))
@@ -73,10 +73,10 @@ namespace QuestoGraph.Manager
                     continue;
                 }
 
-                var questDataEn = new QuestDataLocalized(quest, Dalamud.Game.ClientLanguage.English);
-                var questDataDe = new QuestDataLocalized(quest.RowId, Dalamud.Game.ClientLanguage.German);
-                var questDataFr = new QuestDataLocalized(quest.RowId, Dalamud.Game.ClientLanguage.French);
-                var questDataJp = new QuestDataLocalized(quest.RowId, Dalamud.Game.ClientLanguage.Japanese);
+                var questDataEn = new QuestDataLocalized(quest, ClientLanguage.English);
+                var questDataDe = new QuestDataLocalized(quest.RowId, ClientLanguage.German);
+                var questDataFr = new QuestDataLocalized(quest.RowId, ClientLanguage.French);
+                var questDataJp = new QuestDataLocalized(quest.RowId, ClientLanguage.Japanese);
 
                 var questData = new QuestData(this.config.General.Language, questDataEn, questDataDe, questDataFr, questDataJp);
                 result.Add(questData.RowId, questData);
@@ -100,7 +100,7 @@ namespace QuestoGraph.Manager
         public IEnumerable<QuestData> GetFilteredList(string filter)
         {
             if (this.CurrentState != State.Initialized ||
-                (this.filteredQuestData != null && string.Equals(filter, this.lastFilter, StringComparison.InvariantCultureIgnoreCase)))
+                (this.filteredQuestData is not null && string.Equals(filter, this.lastFilter, StringComparison.InvariantCultureIgnoreCase)))
             {
                 return this.filteredQuestData ?? [];
             }
@@ -133,6 +133,7 @@ namespace QuestoGraph.Manager
             Plugin.Log.Debug($"Refreshing Filtered List with filter '{filter ?? string.Empty}'");
             this.lastFilter = filter ?? string.Empty;
             this.filteredQuestData = this.QuestData.Values.Where(qd => qd.IsReachable && !IsPrefiltered(qd) && this.DeepContains(qd, filter)).ToList();
+
             return this.filteredQuestData;
         }
 
