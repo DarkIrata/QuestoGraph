@@ -4,6 +4,8 @@ namespace QuestoGraph.Data.Settings
 {
     public class SearchFilterSettings
     {
+        public bool UseAdvancedFilter { get; set; } = false;
+
         public SelectableClientLanguage SearchLangauge { get; set; } = SelectableClientLanguage.Default;
 
         public bool UseSettingsPrefilter { get; set; } = true;

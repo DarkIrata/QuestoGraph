@@ -24,7 +24,6 @@ namespace QuestoGraph.Windows
         private readonly EventAggregator eventAggregator;
 
         private string filter = string.Empty;
-        private bool showMoreFilter = false;
         private QuestData? selectedQuestData = null;
 
         public MainWindow(Config config, QuestsManager questsManager, UIManager uiManager, EventAggregator eventAggregator)
@@ -170,21 +169,21 @@ namespace QuestoGraph.Windows
             {
                 freePos.SetY(freePos.LastPos.Y);
                 freePos.SetX(freePos.LastPos.X - (spacing * 2));
-                var icon = this.showMoreFilter ? FontAwesomeIcon.CaretUp : FontAwesomeIcon.CaretDown;
+                //var icon = this.questsManager.SearchFilter.UseAdvancedFilter ? FontAwesomeIcon.CaretUp : FontAwesomeIcon.CaretDown;
+                var icon = this.questsManager.SearchFilter.UseAdvancedFilter ? FontAwesomeIcon.Filter : FontAwesomeIcon.FilterCircleXmark;
                 if (ImGui.Button($"{icon.ToIconString()}##MoreFilterOptions", new Vector2(buttonSize, buttonSize)))
                 {
-                    this.showMoreFilter = !this.showMoreFilter;
+                    this.questsManager.SearchFilter.UseAdvancedFilter = !this.questsManager.SearchFilter.UseAdvancedFilter;
                 }
             }
-            ImGuiUtils.Tooltip("Show advanced filter options");
+            ImGuiUtils.Tooltip("Advanced filter options");
 
-            if (this.showMoreFilter)
+            if (this.questsManager.SearchFilter.UseAdvancedFilter)
             {
-
                 //using (ImRaii.PushFont(UiBuilder.IconFont))
                 using (ImGuiUtils.SetTempWindowFontScale(0.875f))
                 {
-                    ImGui.Text("Language");
+                    ImGui.Text("Search Language");
                 }
                 //ImGui.Text($"{FontAwesomeIcon.Language.ToIconString()}");
 

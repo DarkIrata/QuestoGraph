@@ -152,11 +152,20 @@ namespace QuestoGraph.Manager
 
             bool Contains(string text, ClientLanguage questName, ClientLanguage emote, ClientLanguage instances, ClientLanguage actions, ClientLanguage items)
             {
-                return (this.SearchFilter.IncludeQuestNames && data.ContainsName(text, comparer, questName)) ||
-                        (this.SearchFilter.IncludeEmotes && data.ContainsEmote(text, comparer, emote)) ||
-                        (this.SearchFilter.IncludeInstances && data.ContainsInstance(text, comparer, instances)) ||
-                        (this.SearchFilter.IncludeActions && data.ContainsAction(text, comparer, actions)) ||
-                        (this.SearchFilter.IncludeItems && data.ContainsItems(text, comparer, items));
+                if (this.SearchFilter.UseAdvancedFilter)
+                {
+                    return (this.SearchFilter.IncludeQuestNames && data.ContainsName(text, comparer, questName)) ||
+                            (this.SearchFilter.IncludeEmotes && data.ContainsEmote(text, comparer, emote)) ||
+                            (this.SearchFilter.IncludeInstances && data.ContainsInstance(text, comparer, instances)) ||
+                            (this.SearchFilter.IncludeActions && data.ContainsAction(text, comparer, actions)) ||
+                            (this.SearchFilter.IncludeItems && data.ContainsItems(text, comparer, items));
+                }
+
+                return data.ContainsName(text, comparer, questName) ||
+                       data.ContainsEmote(text, comparer, emote) ||
+                       data.ContainsInstance(text, comparer, instances) ||
+                       data.ContainsAction(text, comparer, actions) ||
+                       data.ContainsItems(text, comparer, items);
             }
 
             ClientLanguage? targetLang;
@@ -164,18 +173,18 @@ namespace QuestoGraph.Manager
             {
                 return Contains(filter![3..], targetLang!.Value, targetLang!.Value, targetLang!.Value, targetLang!.Value, targetLang!.Value);
             }
-            else if (this.HasSearchLanguageSet(out targetLang))
+            else if (this.SearchFilter.UseAdvancedFilter && this.HasSearchLanguageSet(out targetLang))
             {
                 return Contains(filter!, targetLang!.Value, targetLang!.Value, targetLang!.Value, targetLang!.Value, targetLang!.Value);
             }
             else
             {
                 return Contains(filter!,
-                this.config.General.Language.QuestNames,
-                this.config.General.Language.Rewards,
-                this.config.General.Language.Instances,
-                this.config.General.Language.Rewards,
-                this.config.General.Language.Rewards);
+                    this.config.General.Language.QuestNames,
+                    this.config.General.Language.Rewards,
+                    this.config.General.Language.Instances,
+                    this.config.General.Language.Rewards,
+                    this.config.General.Language.Rewards);
             }
         }
 
