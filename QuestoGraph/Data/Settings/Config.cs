@@ -7,7 +7,7 @@ namespace QuestoGraph.Data.Settings
     {
         public int Version { get; set; } = 1;
 
-        public SearchFilterSettings SearchFilter { get; } = new SearchFilterSettings();
+        public QuestListSettings QuestList { get; set; } = new QuestListSettings();
 
         public GeneralSettings General { get; set; } = new GeneralSettings();
 

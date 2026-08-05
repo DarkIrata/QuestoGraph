@@ -75,9 +75,29 @@ namespace QuestoGraph.Windows
                         {
                             if (this.questsManager.CurrentState == QuestsManager.State.Initialized)
                             {
+                                var isSelected = false;
+                                if (this.config.QuestList.PinnedQuests.Count > 0)
+                                {
+                                    using (ImGuiUtils.SetTempWindowFontScale(0.90f))
+                                    {
+                                        ImGui.Text($"Pinned quests ({this.config.QuestList.PinnedQuests.Count})");
+                                    }
+                                    foreach (var pinnedQuestId in this.config.QuestList.PinnedQuests)
+                                    {
+                                        var questData = this.questsManager.QuestData[pinnedQuestId];
+                                        isSelected = this.selectedQuestData == questData;
+                                        if (ImGuiUtils.SelectableQuest(this.config.Colors, questData, null, ref isSelected))
+                                        {
+                                            this.selectedQuestData = questData;
+                                            isSelected = true;
+                                        }
+                                    }
+                                    ImGui.Separator();
+                                }
+
                                 foreach (var questData in this.questsManager.GetFilteredList(this.filter))
                                 {
-                                    var isSelected = this.selectedQuestData == questData;
+                                    isSelected = this.selectedQuestData == questData;
                                     if (ImGuiUtils.SelectableQuest(this.config.Colors, questData, null, ref isSelected))
                                     {
                                         this.selectedQuestData = questData;
@@ -92,7 +112,7 @@ namespace QuestoGraph.Windows
                             }
                             else
                             {
-                                const string text = "Building Tree..";
+                                const string text = "Moogles building the tree..";
                                 ImGui.SetCursorPos((ImGui.GetContentRegionAvail() - ImGui.CalcTextSize(text)) * 0.5f);
                                 ImGui.TextUnformatted(text);
                             }
@@ -138,7 +158,7 @@ namespace QuestoGraph.Windows
 
         private void DrawFilterOptions(System.Numerics.Vector2 availableSize)
         {
-            const float buttonSize = 24f;
+            const float buttonSize = 22f;
             const float spacing = 3f;
             ImGui.SetNextItemWidth(availableSize.X - buttonSize - spacing);
             ImGui.InputTextWithHint("##NameFilter", "Search..", ref this.filter, 255);
@@ -160,7 +180,6 @@ namespace QuestoGraph.Windows
 
             if (this.showMoreFilter)
             {
-                const int toggleIconSize = 24;
 
                 //using (ImRaii.PushFont(UiBuilder.IconFont))
                 using (ImGuiUtils.SetTempWindowFontScale(0.875f))
@@ -170,16 +189,17 @@ namespace QuestoGraph.Windows
                 //ImGui.Text($"{FontAwesomeIcon.Language.ToIconString()}");
 
                 //ImGui.SetNextItemWidth(ImGui.CalcTextSize("ABCDEFGHABCD").X);
-                ImGui.SetNextItemWidth(availableSize.X - (toggleIconSize * 2));
-                var oldLang = this.config.SearchFilter.SearchLangauge;
-                this.config.SearchFilter.SearchLangauge = ImGuiUtils.Combobox("##searchLanguage", this.config.SearchFilter.SearchLangauge, SelectableClientLanguage.Default, Enum.GetValues<SelectableClientLanguage>());
-                if (oldLang != this.config.SearchFilter.SearchLangauge)
+                ImGui.SetNextItemWidth(availableSize.X - (22 * 2));
+                var oldLang = this.questsManager.SearchFilter.SearchLangauge;
+                this.questsManager.SearchFilter.SearchLangauge = ImGuiUtils.Combobox("##searchLanguage", this.questsManager.SearchFilter.SearchLangauge, SelectableClientLanguage.Default, Enum.GetValues<SelectableClientLanguage>());
+                if (oldLang != this.questsManager.SearchFilter.SearchLangauge)
                 {
                     this.questsManager.RefreshList();
                 }
 
                 bool addToggleImage(uint iconId, bool state, string tooltip)
                 {
+                    const int toggleIconSize = 24;
                     const float toggleIconOffOpacity = 0.35f;
 
                     var toggleIcon = ImGuiUtils.GetIcon(iconId);
@@ -202,17 +222,17 @@ namespace QuestoGraph.Windows
                 }
 
                 ImGui.SameLine();
-                this.config.SearchFilter.UseSettingsPrefilter = addToggleImage(29, this.config.SearchFilter.UseSettingsPrefilter, "Use Settings Filter");
+                this.questsManager.SearchFilter.UseSettingsPrefilter = addToggleImage(29, this.questsManager.SearchFilter.UseSettingsPrefilter, "Use Settings Filter");
 
-                this.config.SearchFilter.IncludeQuestNames = addToggleImage(5, this.config.SearchFilter.IncludeQuestNames, "Include Quest Name");
+                this.questsManager.SearchFilter.IncludeQuestNames = addToggleImage(5, this.questsManager.SearchFilter.IncludeQuestNames, "Include Quest Name");
                 ImGui.SameLine();
-                this.config.SearchFilter.IncludeEmotes = addToggleImage(9, this.config.SearchFilter.IncludeEmotes, "Include Emotes");
+                this.questsManager.SearchFilter.IncludeEmotes = addToggleImage(9, this.questsManager.SearchFilter.IncludeEmotes, "Include Emotes");
                 ImGui.SameLine();
-                this.config.SearchFilter.IncludeInstances = addToggleImage(46, this.config.SearchFilter.IncludeInstances, "Include Duty Instances");
+                this.questsManager.SearchFilter.IncludeInstances = addToggleImage(46, this.questsManager.SearchFilter.IncludeInstances, "Include Duty Instances");
                 ImGui.SameLine();
-                this.config.SearchFilter.IncludeActions = addToggleImage(4, this.config.SearchFilter.IncludeActions, "Include Actions");
+                this.questsManager.SearchFilter.IncludeActions = addToggleImage(4, this.questsManager.SearchFilter.IncludeActions, "Include Actions");
                 ImGui.SameLine();
-                this.config.SearchFilter.IncludeItems = addToggleImage(2, this.config.SearchFilter.IncludeItems, "Include Items");
+                this.questsManager.SearchFilter.IncludeItems = addToggleImage(2, this.questsManager.SearchFilter.IncludeItems, "Include Items");
             }
         }
 
@@ -513,9 +533,12 @@ namespace QuestoGraph.Windows
                 ImGui.Text($"{FontAwesomeIcon.Language.ToIconString()}");
             ImGuiUtils.Tooltip(translatedNames);
 
+            const float windowFontScaleFixValue = 20f;
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() - windowFontScaleFixValue);
             if (issuerPayload != null)
             {
                 using (ImRaii.PushFont(UiBuilder.IconFont))
+                using (ImGuiUtils.SetTempWindowFontScale(0.75f))
                 using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.Y))
                 {
                     const float buttonSize = 24f;
@@ -531,6 +554,7 @@ namespace QuestoGraph.Windows
             }
 
             using (ImRaii.PushFont(UiBuilder.IconFont))
+            using (ImGuiUtils.SetTempWindowFontScale(0.75f))
             using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.Y))
             {
                 const float buttonSize = 24f;
@@ -541,10 +565,10 @@ namespace QuestoGraph.Windows
                     GameUtils.ShowInQuestJournal(questData.RowId);
                 }
             }
-
             ImGuiUtils.Tooltip("Try open in quest journal");
 
             using (ImRaii.PushFont(UiBuilder.IconFont))
+            using (ImGuiUtils.SetTempWindowFontScale(0.75f))
             using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.Y))
             {
                 const float buttonSize = 24f;
@@ -555,8 +579,32 @@ namespace QuestoGraph.Windows
                     this.uiManager.ShowGraph(questData);
                 }
             }
-
             ImGuiUtils.Tooltip("Open in Graph");
+
+            var pinned = this.config.QuestList.PinnedQuests.Contains(questData.RowId);
+            using (ImRaii.PushFont(UiBuilder.IconFont))
+            using (ImGuiUtils.SetTempWindowFontScale(0.75f))
+            using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.Y))
+            {
+                const float buttonSize = 24f;
+                freePos.SetX(ImGui.GetContentRegionAvail().X - 12f - (buttonSize * 4));
+                freePos.SetY(freePos.LastPos.Y - ImGui.CalcTextSize(metaInfo).Y);
+                if (ImGui.Button($"{(pinned ? FontAwesomeIcon.ThumbtackSlash : FontAwesomeIcon.Thumbtack).ToIconString()}##PinAction_" + questData.RowId, new Vector2(buttonSize, buttonSize)))
+                {
+                    if (pinned)
+                    {
+                        this.config.QuestList.PinnedQuests.Remove(questData.RowId);
+                    }
+                    else
+                    {
+                        this.config.QuestList.PinnedQuests.Add(questData.RowId);
+                    }
+
+                    Plugin.Interface.SavePluginConfig(this.config);
+                }
+            }
+            ImGuiUtils.Tooltip((pinned ? "Unpin" : "Pin") + " quest");
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + windowFontScaleFixValue);
         }
 
         internal void Prefilter(string? args)

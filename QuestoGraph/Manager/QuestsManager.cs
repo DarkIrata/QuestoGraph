@@ -20,6 +20,8 @@ namespace QuestoGraph.Manager
 
         public IReadOnlyDictionary<uint, QuestData> QuestData { get; private set; } = new Dictionary<uint, QuestData>();
 
+        public SearchFilterSettings SearchFilter { get; } = new SearchFilterSettings();
+
         public State CurrentState { get; private set; } = State.Unloaded;
 
         private string lastFilter = string.Empty;
@@ -53,14 +55,14 @@ namespace QuestoGraph.Manager
         {
             if (this.CurrentState == State.Initializing)
             {
-                Plugin.Log.Warning($"Already Initializing Quests..");
+                Plugin.Log.Warning("Already Initializing Quests..");
                 return;
             }
 
             var sw = new Stopwatch();
             sw.Start();
 
-            Plugin.Log.Info($"Initializing Quests..");
+            Plugin.Log.Info("Initializing Quests..");
             this.CurrentState = State.Initializing;
             var result = new Dictionary<uint, QuestData>();
             foreach (var quest in Plugin.DataManager.GetExcelSheet<Quest>(Dalamud.Game.ClientLanguage.English))
@@ -80,7 +82,7 @@ namespace QuestoGraph.Manager
                 result.Add(questData.RowId, questData);
             }
 
-            Plugin.Log.Info($"Building NextQuest tree..");
+            Plugin.Log.Info("Building NextQuest tree..");
             foreach (var quest in result)
             {
                 var nextQuests = result.Values.Where(q => q.PreviousQuestsId.Any(pq => pq == quest.Key)).Select(q => q.RowId);
@@ -100,12 +102,12 @@ namespace QuestoGraph.Manager
             if (this.CurrentState != State.Initialized ||
                 (this.filteredQuestData != null && string.Equals(filter, this.lastFilter, StringComparison.InvariantCultureIgnoreCase)))
             {
-                return this.filteredQuestData ?? Array.Empty<QuestData>();
+                return this.filteredQuestData ?? [];
             }
 
             bool IsPrefiltered(QuestData data) // Filtered through basic Configuration
             {
-                if (this.config.SearchFilter.UseSettingsPrefilter)
+                if (this.SearchFilter.UseSettingsPrefilter)
                 {
                     return false;
                 }
@@ -149,11 +151,11 @@ namespace QuestoGraph.Manager
 
             bool Contains(string text, ClientLanguage questName, ClientLanguage emote, ClientLanguage instances, ClientLanguage actions, ClientLanguage items)
             {
-                return (this.config.SearchFilter.IncludeQuestNames && data.ContainsName(text, comparer, questName)) ||
-                        (this.config.SearchFilter.IncludeEmotes && data.ContainsEmote(text, comparer, emote)) ||
-                        (this.config.SearchFilter.IncludeInstances && data.ContainsInstance(text, comparer, instances)) ||
-                        (this.config.SearchFilter.IncludeActions && data.ContainsAction(text, comparer, actions)) ||
-                        (this.config.SearchFilter.IncludeItems && data.ContainsItems(text, comparer, items));
+                return (this.SearchFilter.IncludeQuestNames && data.ContainsName(text, comparer, questName)) ||
+                        (this.SearchFilter.IncludeEmotes && data.ContainsEmote(text, comparer, emote)) ||
+                        (this.SearchFilter.IncludeInstances && data.ContainsInstance(text, comparer, instances)) ||
+                        (this.SearchFilter.IncludeActions && data.ContainsAction(text, comparer, actions)) ||
+                        (this.SearchFilter.IncludeItems && data.ContainsItems(text, comparer, items));
             }
 
             ClientLanguage? targetLang;
@@ -161,7 +163,7 @@ namespace QuestoGraph.Manager
             {
                 return Contains(filter![3..], targetLang!.Value, targetLang!.Value, targetLang!.Value, targetLang!.Value, targetLang!.Value);
             }
-            else if (this.HasSearchLanguageSet(filter!, out targetLang))
+            else if (this.HasSearchLanguageSet(out targetLang))
             {
                 return Contains(filter!, targetLang!.Value, targetLang!.Value, targetLang!.Value, targetLang!.Value, targetLang!.Value);
             }
@@ -200,13 +202,13 @@ namespace QuestoGraph.Manager
             return language is not null;
         }
 
-        private bool HasSearchLanguageSet(string filter, out ClientLanguage? language)
+        private bool HasSearchLanguageSet(out ClientLanguage? language)
         {
             language = null;
 
-            if (this.config.SearchFilter.SearchLangauge != Enums.SelectableClientLanguage.Default)
+            if (this.SearchFilter.SearchLangauge != Enums.SelectableClientLanguage.Default)
             {
-                switch (this.config.SearchFilter.SearchLangauge)
+                switch (this.SearchFilter.SearchLangauge)
                 {
                     case Enums.SelectableClientLanguage.English:
                         language = ClientLanguage.English;
