@@ -66,6 +66,7 @@ namespace QuestoGraph.Windows
             Plugin.Interface.SavePluginConfig(this.config);
 
             //this.questsManager.ReInitialize();
+            this.questsManager.RefreshList();
 
             if (this.config.Graph.ShowArrowheads != this.oldShowArrowheads ||
                 this.config.Graph.CompressMSQ != this.oldCompressMSQ)
@@ -149,16 +150,16 @@ namespace QuestoGraph.Windows
             using (var indent = new ImRaii.IndentDisposable())
             {
                 indent.Indent(1);
-                this.config.General.ShowQuestId = this.Checkbox("Show Quest Id", this.config.General.ShowQuestId);
+                this.config.General.ShowQuestId = ImGuiUtils.Checkbox("Show Quest Id", this.config.General.ShowQuestId);
             }
 
             ImGuiUtils.SeperatorWithText("Language");
             using (var indent = new ImRaii.IndentDisposable())
             {
                 indent.Indent(1);
-                this.config.General.Language.QuestNames = this.Combobox("Quests", this.config.General.Language.QuestNames, Plugin.DataManager.Language, Enum.GetValues<ClientLanguage>());
-                this.config.General.Language.Rewards = this.Combobox("Rewards", this.config.General.Language.Rewards, Plugin.DataManager.Language, Enum.GetValues<ClientLanguage>());
-                this.config.General.Language.Instances = this.Combobox("Instances", this.config.General.Language.Instances, Plugin.DataManager.Language, Enum.GetValues<ClientLanguage>());
+                this.config.General.Language.QuestNames = ImGuiUtils.Combobox("Quests", this.config.General.Language.QuestNames, Plugin.DataManager.Language, Enum.GetValues<ClientLanguage>());
+                this.config.General.Language.Rewards = ImGuiUtils.Combobox("Rewards", this.config.General.Language.Rewards, Plugin.DataManager.Language, Enum.GetValues<ClientLanguage>());
+                this.config.General.Language.Instances = ImGuiUtils.Combobox("Instances", this.config.General.Language.Instances, Plugin.DataManager.Language, Enum.GetValues<ClientLanguage>());
             }
         }
 
@@ -168,23 +169,13 @@ namespace QuestoGraph.Windows
             using (var indent = new ImRaii.IndentDisposable())
             {
                 indent.Indent(1);
-                this.config.Display.ShowMSQQuests = this.Checkbox("MSQ Quests", this.config.Display.ShowMSQQuests);
-                this.config.Display.ShowNormalQuests = this.Checkbox("Normal Quests", this.config.Display.ShowNormalQuests);
-                this.config.Display.ShowBlueQuests = this.Checkbox("Blue Quests", this.config.Display.ShowBlueQuests);
-                this.config.Display.ShowEmoteQuests = this.Checkbox("Unlocks Emotes", this.config.Display.ShowEmoteQuests);
-                this.config.Display.ShowWithRewards = this.Checkbox("Has Item Rewards", this.config.Display.ShowWithRewards);
-                this.config.Display.ShowInstanceUnlocks = this.Checkbox("Unlocks Instances", this.config.Display.ShowInstanceUnlocks);
-                this.config.Display.ShowJobAndActionQuests = this.Checkbox("Unlocks Job / Actions", this.config.Display.ShowJobAndActionQuests);
-            }
-
-            ImGuiUtils.SeperatorWithText("Search");
-            using (var indent = new ImRaii.IndentDisposable())
-            {
-                indent.Indent(1);
-                this.config.Search.IncludeItems = this.Checkbox("Include Items", this.config.Search.IncludeItems);
-                this.config.Search.IncludeEmotes = this.Checkbox("Include Emotes", this.config.Search.IncludeEmotes);
-                this.config.Search.IncludeInstances = this.Checkbox("Include Instances", this.config.Search.IncludeInstances);
-                this.config.Search.IncludeActions = this.Checkbox("Include Actions", this.config.Search.IncludeActions);
+                this.config.Display.ShowMSQQuests = ImGuiUtils.Checkbox("MSQ Quests", this.config.Display.ShowMSQQuests);
+                this.config.Display.ShowNormalQuests = ImGuiUtils.Checkbox("Normal Quests", this.config.Display.ShowNormalQuests);
+                this.config.Display.ShowBlueQuests = ImGuiUtils.Checkbox("Blue Quests", this.config.Display.ShowBlueQuests);
+                this.config.Display.ShowEmoteQuests = ImGuiUtils.Checkbox("Unlocks Emotes", this.config.Display.ShowEmoteQuests);
+                this.config.Display.ShowWithRewards = ImGuiUtils.Checkbox("Has Item Rewards", this.config.Display.ShowWithRewards);
+                this.config.Display.ShowInstanceUnlocks = ImGuiUtils.Checkbox("Unlocks Instances", this.config.Display.ShowInstanceUnlocks);
+                this.config.Display.ShowJobAndActionQuests = ImGuiUtils.Checkbox("Unlocks Job / Actions", this.config.Display.ShowJobAndActionQuests);
             }
         }
 
@@ -227,59 +218,9 @@ namespace QuestoGraph.Windows
             using (var indent = new ImRaii.IndentDisposable())
             {
                 indent.Indent(1);
-                this.config.Graph.CompressMSQ = this.Checkbox("Compress MSQ Quests", this.config.Graph.CompressMSQ);
-                this.config.Graph.ShowArrowheads = this.Checkbox("Show Arrowheads", this.config.Graph.ShowArrowheads);
+                this.config.Graph.CompressMSQ = ImGuiUtils.Checkbox("Compress MSQ Quests", this.config.Graph.CompressMSQ);
+                this.config.Graph.ShowArrowheads = ImGuiUtils.Checkbox("Show Arrowheads", this.config.Graph.ShowArrowheads);
             }
-        }
-
-        private bool Checkbox(string label, bool state)
-        {
-            var temp = state;
-            if (ImGui.Checkbox(label, ref temp))
-            {
-                return temp;
-            }
-
-            return state;
-        }
-
-        private T Combobox<T>(string label, T currentValue, T fallbackValue, params T[] items)
-        {
-            if (items.Length < 1)
-            {
-                return currentValue;
-            }
-
-            var selectedIndex = items.IndexOf(currentValue);
-            if (selectedIndex < 0)
-            {
-                selectedIndex = items.IndexOf(fallbackValue);
-                if (selectedIndex < 0)
-                {
-                    selectedIndex = 0;
-                }
-            }
-
-            if (ImGui.BeginCombo(label, items[selectedIndex]?.ToString()))
-            {
-                for (int i = 0; i < items.Length; i++)
-                {
-                    var isSelected = (i == selectedIndex);
-                    if (ImGui.Selectable(items[i]?.ToString(), isSelected))
-                    {
-                        selectedIndex = i;
-                    }
-
-                    if (isSelected)
-                    {
-                        ImGui.SetItemDefaultFocus();
-                    }
-                }
-
-                ImGui.EndCombo();
-            }
-
-            return items[selectedIndex];
         }
 
         private Vector4 ColorEdit(string text, string suffix, Vector4 color, Vector4 reset)

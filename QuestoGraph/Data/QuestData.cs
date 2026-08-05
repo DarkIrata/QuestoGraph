@@ -68,7 +68,7 @@ namespace QuestoGraph.Data
             this.QuestDataJp = questDataJp;
         }
 
-        private QuestDataLocalized GetLocalizedQuestData(ClientLanguage language) => language switch
+        public QuestDataLocalized GetLocalizedQuestData(ClientLanguage language) => language switch
         {
             ClientLanguage.Japanese => this.QuestDataJp,
             ClientLanguage.German => this.QuestDataDe,
@@ -83,5 +83,81 @@ namespace QuestoGraph.Data
             this.QuestDataFr.AppendNextQuests(nextQuests);
             this.QuestDataJp.AppendNextQuests(nextQuests);
         }
+
+        //internal bool ContainsName(string name, StringComparison comparer, ClientLanguage language)
+        //{
+        //    var localized = this.GetLocalizedQuestData(language);
+        //    return LevenshteinDistance.Calculate(localized.Name.ToLower(), name.ToLower()) < 5;
+        //}
+
+        //internal bool ContainsEmote(string name, StringComparison comparer, ClientLanguage language)
+        //{
+        //    var localized = this.GetLocalizedQuestData(language);
+        //    return localized.HasEmoteReward && LevenshteinDistance.Calculate(localized.Emote.Name.ExtractText().ToLower(), name.ToLower()) < 5;
+        //}
+
+        //internal bool ContainsInstance(string name, StringComparison comparer, ClientLanguage language)
+        //{
+        //    var localized = this.GetLocalizedQuestData(language);
+        //    return localized.InstanceUnlocks.Any(iu => iu.ContentFound && LevenshteinDistance.Calculate(iu.Name.ToLower(), name.ToLower()) < 5);
+        //}
+
+        //internal bool ContainsAction(string name, StringComparison comparer, ClientLanguage language)
+        //{
+        //    var localized = this.GetLocalizedQuestData(language);
+        //    return LevenshteinDistance.Calculate(localized.Action.Name.ExtractText().ToLower(), name.ToLower()) < 5 ||
+        //           localized.GeneralActions.Any(ga => LevenshteinDistance.Calculate(ga.Name.ToLower(), name.ToLower()) < 5);
+        //}
+
+
+        //internal bool ContainsItems(string name, StringComparison comparer, ClientLanguage language)
+        //{
+        //    var localized = this.GetLocalizedQuestData(language);
+        //    return localized.ItemRewards.RewardItems.Any(r => LevenshteinDistance.Calculate(r.Name.ToLower(), name.ToLower()) < 5) ||
+        //             localized.ItemRewards.OptionalItems.Any(r => LevenshteinDistance.Calculate(r.Name.ToLower(), name.ToLower()) < 5) ||
+        //             localized.ItemRewards.CatalystItems.Any(r => LevenshteinDistance.Calculate(r.Name.ToLower(), name.ToLower()) < 5) ||
+        //             (localized.ItemRewards.HasOtherItemReward && LevenshteinDistance.Calculate(localized.ItemRewards.OtherItem!.Name.ToLower(), name.ToLower()) < 5);
+        //}
+
+        internal bool ContainsName(string name, StringComparison comparer, ClientLanguage language)
+        {
+            var localized = this.GetLocalizedQuestData(language);
+            return localized.Name.Contains(name, comparer);
+        }
+
+        internal bool ContainsEmote(string name, StringComparison comparer, ClientLanguage language)
+        {
+            var localized = this.GetLocalizedQuestData(language);
+            return localized.HasEmoteReward && localized.Emote.Name.ExtractText().Contains(name, comparer);
+        }
+
+        internal bool ContainsInstance(string name, StringComparison comparer, ClientLanguage language)
+        {
+            var localized = this.GetLocalizedQuestData(language);
+            return localized.InstanceUnlocks.Any(iu => iu.ContentFound && iu.Name.Contains(name, comparer));
+        }
+
+        internal bool ContainsAction(string name, StringComparison comparer, ClientLanguage language)
+        {
+            var localized = this.GetLocalizedQuestData(language);
+            return localized.Action.Name.ExtractText().Contains(name, comparer) ||
+                               localized.GeneralActions.Any(ga => ga.Name.Contains(name, comparer));
+        }
+
+        internal bool ContainsItems(string name, StringComparison comparer, ClientLanguage language)
+        {
+            var localized = this.GetLocalizedQuestData(language);
+            return localized.ItemRewards.RewardItems.Any(r => r.Name.Contains(name, comparer)) ||
+                     localized.ItemRewards.OptionalItems.Any(r => r.Name.Contains(name, comparer)) ||
+                     localized.ItemRewards.CatalystItems.Any(r => r.Name.Contains(name, comparer)) ||
+                     (localized.ItemRewards.HasOtherItemReward && localized.ItemRewards.OtherItem!.Name.Contains(name, comparer));
+        }
+
+        internal bool ContainsText(string text, StringComparison comparer, ClientLanguage language)
+            => this.ContainsName(text, comparer, language) ||
+                this.ContainsEmote(text, comparer, language) ||
+                this.ContainsInstance(text, comparer, language) ||
+                this.ContainsAction(text, comparer, language) ||
+                this.ContainsItems(text, comparer, language);
     }
 }
