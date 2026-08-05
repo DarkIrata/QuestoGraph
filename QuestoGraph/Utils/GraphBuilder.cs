@@ -15,8 +15,8 @@ namespace QuestoGraph.Utils
         private readonly LayoutAlgorithmSettings LayoutSettings = new SugiyamaLayoutSettings()
         {
             AspectRatio = 2.0,
-            BrandesThreshold = 0,
-            RepetitionCoefficientForOrdering = 20
+            //BrandesThreshold = 0,
+            //RepetitionCoefficientForOrdering = 20
         };
 
         private bool newStopwatch = false;
