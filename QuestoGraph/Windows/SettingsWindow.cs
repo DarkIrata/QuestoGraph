@@ -33,6 +33,7 @@ namespace QuestoGraph.Windows
         private Options selectedOption = Options.General;
         private bool oldShowArrowheads = true;
         private bool oldCompressMSQ = true;
+        private ClientLanguage oldQuestNameLanguage;
 
         public SettingsWindow(Config config, QuestsManager questsManager, UIManager uiManager, Services.Events.EventAggregator eventAggregator)
             : base($"{Plugin.Name} - Settings##Settings", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoResize)
@@ -56,6 +57,7 @@ namespace QuestoGraph.Windows
 
             this.oldShowArrowheads = this.config.Graph.ShowArrowheads;
             this.oldCompressMSQ = this.config.Graph.CompressMSQ;
+            this.oldQuestNameLanguage = this.config.General.Language.QuestNames;
         }
 
         public override void OnClose()
@@ -69,7 +71,8 @@ namespace QuestoGraph.Windows
             this.questsManager.RefreshList();
 
             if (this.config.Graph.ShowArrowheads != this.oldShowArrowheads ||
-                this.config.Graph.CompressMSQ != this.oldCompressMSQ)
+                this.config.Graph.CompressMSQ != this.oldCompressMSQ ||
+                this.config.General.Language.QuestNames != this.oldQuestNameLanguage)
             {
                 this.uiManager.RedrawGraph();
             }
