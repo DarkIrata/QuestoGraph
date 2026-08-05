@@ -1,4 +1,5 @@
 ﻿using Dalamud.Bindings.ImGui;
+using Dalamud.Game;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Interface;
@@ -23,6 +24,7 @@ namespace QuestoGraph.Windows
         private readonly EventAggregator eventAggregator;
 
         private string filter = string.Empty;
+        private bool showMoreFilter = false;
         private QuestData? selectedQuestData = null;
 
         public MainWindow(Config config, QuestsManager questsManager, UIManager uiManager, EventAggregator eventAggregator)
@@ -60,11 +62,14 @@ namespace QuestoGraph.Windows
                 if (container.Success)
                 {
                     var availableSize = ImGui.GetContentRegionAvail();
-                    ImGui.SetNextItemWidth(availableSize.X);
-                    ImGui.InputTextWithHint("##NameFilter", "Search..", ref this.filter, 255);
+                    using (var header = ImRaii.Group())
+                    {
+                        this.DrawFilterOptions(availableSize);
+                    }
                     ImGui.Separator();
 
-                    using (var child = ImRaii.Child("##Quests", new Vector2(availableSize.X, availableSize.Y - 62), false, ImGuiWindowFlags.HorizontalScrollbar))
+                    availableSize = ImGui.GetContentRegionAvail();
+                    using (var child = ImRaii.Child("##Quests", new Vector2(availableSize.X, availableSize.Y - 31), false, ImGuiWindowFlags.HorizontalScrollbar))
                     {
                         if (child.Success)
                         {
@@ -87,7 +92,7 @@ namespace QuestoGraph.Windows
                             }
                             else
                             {
-                                const string text = "Loading..";
+                                const string text = "Building Tree..";
                                 ImGui.SetCursorPos((ImGui.GetContentRegionAvail() - ImGui.CalcTextSize(text)) * 0.5f);
                                 ImGui.TextUnformatted(text);
                             }
@@ -95,36 +100,120 @@ namespace QuestoGraph.Windows
                     }
 
                     ImGui.Separator();
-                    using (var color = new ImRaii.ColorDisposable())
+                    using (var footer = ImRaii.Group())
                     {
-                        // i stole the idea from marketboard plugin. Sorry D:
-                        //const uint baseColor = 0x003440ebu;
-                        const uint baseColor = 0x00323bbfu;
-                        color.Push(ImGuiCol.Button, 0xFF000000 | baseColor);
-                        color.Push(ImGuiCol.ButtonHovered, 0xAA000000 | baseColor);
-                        if (ImGui.Button(" Support on Ko-Fi "))
+                        using (var color = new ImRaii.ColorDisposable())
                         {
-                            Dalamud.Utility.Util.OpenLink("https://ko-fi.com/darkirata");
+                            // i stole the idea from marketboard plugin. Sorry D:
+                            //const uint baseColor = 0x003440ebu;
+                            const uint baseColor = 0x00323bbfu;
+                            color.Push(ImGuiCol.Button, 0xFF000000 | baseColor);
+                            color.Push(ImGuiCol.ButtonHovered, 0xAA000000 | baseColor);
+                            if (ImGui.Button(" Support on Ko-Fi "))
+                            {
+                                Dalamud.Utility.Util.OpenLink("https://ko-fi.com/darkirata");
+                            }
                         }
-                    }
 
-                    ImGui.SameLine();
-                    using (ImRaii.PushFont(UiBuilder.IconFont))
-                    using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.Y))
-                    {
-                        const float buttonSize = 24f;
-                        freePos.SetX(availableSize.X - (buttonSize / 2) - 4f);
-                        if (ImGui.Button($"{FontAwesomeIcon.Cog.ToIconString()}##Settings", new Vector2(buttonSize, buttonSize)))
+                        ImGui.SameLine();
+                        using (ImRaii.PushFont(UiBuilder.IconFont))
+                        using (ImGuiUtils.SetTempWindowFontScale(0.65f))
+                        using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.Y))
                         {
-                            this.uiManager.ToggleSettings();
+                            const float buttonSize = 24f;
+                            freePos.SetX(availableSize.X - (buttonSize / 2) - 4f);
+                            if (ImGui.Button($"{FontAwesomeIcon.Cog.ToIconString()}##Settings", new Vector2(buttonSize, buttonSize)))
+                            {
+                                this.uiManager.ToggleSettings();
+                            }
                         }
+                        ImGuiUtils.Tooltip("Open Settings");
                     }
-                    ImGuiUtils.Tooltip("Open Settings");
                 }
             }
 
             ImGui.SameLine();
             this.DrawSelectedQuestDetails();
+        }
+
+        private void DrawFilterOptions(System.Numerics.Vector2 availableSize)
+        {
+            const float buttonSize = 24f;
+            const float spacing = 3f;
+            ImGui.SetNextItemWidth(availableSize.X - buttonSize - spacing);
+            ImGui.InputTextWithHint("##NameFilter", "Search..", ref this.filter, 255);
+            ImGui.SameLine();
+
+            using (ImRaii.PushFont(UiBuilder.IconFont))
+            using (ImGuiUtils.SetTempWindowFontScale(0.75f))
+            using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.None))
+            {
+                freePos.SetY(freePos.LastPos.Y);
+                freePos.SetX(freePos.LastPos.X - (spacing * 2));
+                var icon = this.showMoreFilter ? FontAwesomeIcon.CaretUp : FontAwesomeIcon.CaretDown;
+                if (ImGui.Button($"{icon.ToIconString()}##MoreFilterOptions", new Vector2(buttonSize, buttonSize)))
+                {
+                    this.showMoreFilter = !this.showMoreFilter;
+                }
+            }
+            ImGuiUtils.Tooltip("Show advanced filter options");
+
+            if (this.showMoreFilter)
+            {
+                const int toggleIconSize = 24;
+
+                //using (ImRaii.PushFont(UiBuilder.IconFont))
+                using (ImGuiUtils.SetTempWindowFontScale(0.875f))
+                {
+                    ImGui.Text("Language");
+                }
+                //ImGui.Text($"{FontAwesomeIcon.Language.ToIconString()}");
+
+                //ImGui.SetNextItemWidth(ImGui.CalcTextSize("ABCDEFGHABCD").X);
+                ImGui.SetNextItemWidth(availableSize.X - (toggleIconSize * 2));
+                var oldLang = this.config.SearchFilter.SearchLangauge;
+                this.config.SearchFilter.SearchLangauge = ImGuiUtils.Combobox("##searchLanguage", this.config.SearchFilter.SearchLangauge, SelectableClientLanguage.Default, Enum.GetValues<SelectableClientLanguage>());
+                if (oldLang != this.config.SearchFilter.SearchLangauge)
+                {
+                    this.questsManager.RefreshList();
+                }
+
+                bool addToggleImage(uint iconId, bool state, string tooltip)
+                {
+                    const float toggleIconOffOpacity = 0.35f;
+
+                    var toggleIcon = ImGuiUtils.GetIcon(iconId);
+                    var startState = state;
+                    if (toggleIcon != null)
+                    {
+                        state = ImGuiUtils.ToogleImage(state, toggleIcon.Handle, toggleIconSize, 1f, toggleIconOffOpacity);
+                        if (!string.IsNullOrEmpty(tooltip))
+                        {
+                            ImGuiUtils.Tooltip(tooltip);
+                        }
+
+                        if (state != startState)
+                        {
+                            this.questsManager.RefreshList();
+                        }
+                    }
+
+                    return state;
+                }
+
+                ImGui.SameLine();
+                this.config.SearchFilter.UseSettingsPrefilter = addToggleImage(29, this.config.SearchFilter.UseSettingsPrefilter, "Use Settings Filter");
+
+                this.config.SearchFilter.IncludeQuestNames = addToggleImage(5, this.config.SearchFilter.IncludeQuestNames, "Include Quest Name");
+                ImGui.SameLine();
+                this.config.SearchFilter.IncludeEmotes = addToggleImage(9, this.config.SearchFilter.IncludeEmotes, "Include Emotes");
+                ImGui.SameLine();
+                this.config.SearchFilter.IncludeInstances = addToggleImage(46, this.config.SearchFilter.IncludeInstances, "Include Duty Instances");
+                ImGui.SameLine();
+                this.config.SearchFilter.IncludeActions = addToggleImage(4, this.config.SearchFilter.IncludeActions, "Include Actions");
+                ImGui.SameLine();
+                this.config.SearchFilter.IncludeItems = addToggleImage(2, this.config.SearchFilter.IncludeItems, "Include Items");
+            }
         }
 
         private void DrawSelectedQuestDetails()
@@ -393,12 +482,13 @@ namespace QuestoGraph.Windows
 
             var journalText = questData.Quest.JournalGenre.IsValid ? questData.Quest.JournalGenre.Value.Name.ExtractText() : string.Empty;
             var levelReqAndName = $"(Lvl: {questData.Quest.ClassJobLevel[0]}) {questData!.Name}";
-#if DEBUG
-            levelReqAndName += $" (ID: {questData.RowId})";
-#endif
+            if (this.config.General.ShowQuestId)
+            {
+                levelReqAndName += $" (ID: {questData.RowId})";
+            }
+
             MapLinkPayload? issuerPayload = null;
             var location = "";
-
             // Map Info
             if (questData.Quest.IssuerLocation.IsValid && questData.Quest.IssuerLocation.RowId != 0)
             {
@@ -409,6 +499,19 @@ namespace QuestoGraph.Windows
 
             ImGui.SameLine();
             ImGui.Text(metaInfo);
+
+            ImGui.SameLine();
+
+            var translatedNames = string.Empty;
+            foreach (var lang in Enum.GetValues<ClientLanguage>())
+            {
+                translatedNames += questData.GetLocalizedQuestData(lang).Name + "\n";
+            }
+
+            using (ImGuiUtils.SetTempWindowFontScale(0.75f))
+            using (ImRaii.PushFont(UiBuilder.IconFont))
+                ImGui.Text($"{FontAwesomeIcon.Language.ToIconString()}");
+            ImGuiUtils.Tooltip(translatedNames);
 
             if (issuerPayload != null)
             {

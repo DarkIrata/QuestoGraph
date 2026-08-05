@@ -59,12 +59,13 @@ namespace QuestoGraph.Windows
         public override void OnOpen()
         {
             Plugin.Log.Info("SHOWING DEBUG WINDOW");
-            var questData = questsManager.QuestData.FirstOrDefault(q => q.Value.Name == "Starlit Smiles").Value;
-            var graph = new GraphBuilder();
-            this.GraphData = graph.Build(questsManager, questData, new Data.Settings.Config(), null, default);
-            this.CenterNode = this.GraphData.CenterNode;
 
-            base.OnOpen();
+            //var questData = questsManager.QuestData.FirstOrDefault(q => q.Value.Name == "Starlit Smiles").Value;
+            //var graph = new GraphBuilder();
+            //this.GraphData = graph.Build(questsManager, questData, new Data.Settings.Config(), null, default);
+            //this.CenterNode = this.GraphData.CenterNode;
+
+            //base.OnOpen();
         }
 
         public override void OnClose()
@@ -77,11 +78,63 @@ namespace QuestoGraph.Windows
         }
 
 
+        private int currentPage = 0;
+        private uint startId = 0;
         public override void Draw()
         {
             if (ImGui.BeginChild("quest-map", new Vector2(-1, -1)))
             {
-                this.DrawTestArea();
+                //this.DrawTestArea();
+
+                if (ImGui.Button("<##BackP"))
+                {
+                    if (currentPage >= 1)
+                    {
+                        currentPage--;
+                        startId -= 64;
+                    }
+                    else
+                    {
+                        currentPage = 0;
+                        startId = 0;
+                    }
+                }
+
+                ImGui.SameLine();
+                ImGui.Text($"Page: {currentPage}");
+
+                ImGui.SameLine();
+                if (ImGui.Button(">##NextP"))
+                {
+                    currentPage++;
+                    startId += 64;
+                }
+
+                var imageId = startId;
+                for (int i = 0; i < 8; i++)
+                {
+                    ImGui.NewLine();
+                    for (int j = 0; j < 8; j++)
+                    {
+                        try
+                        {
+                            var icon = ImGuiUtils.GetIcon(imageId);
+                            if (icon != null)
+                            {
+                                ImGui.SameLine();
+                                ImGui.Image(icon.Handle, new Vector2(55, 55));
+                                ImGuiUtils.Tooltip("ID " + imageId);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            ImGui.SameLine();
+                            ImGui.Text($"Failed: {imageId}");
+                        }
+
+                        imageId++;
+                    }
+                }
 
                 ImGui.EndChild();
             }

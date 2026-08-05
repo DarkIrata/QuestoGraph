@@ -13,6 +13,28 @@ namespace QuestoGraph.Utils
 {
     internal static class ImGuiUtils
     {
+        internal class TempWindowFontScale : IDisposable
+        {
+            public float CurrentScale => this.currentScale;
+            private float defaultScale = 1f;
+            private float currentScale = 1f;
+
+            public TempWindowFontScale(float scale, float defaultScale = 1f)
+            {
+                this.defaultScale = defaultScale;
+                this.SetScale(scale);
+            }
+
+            public void SetScale(float scale)
+            {
+                this.currentScale = scale;
+                ImGui.SetWindowFontScale(scale);
+            }
+
+            public void Dispose()
+                => this.SetScale(this.defaultScale);
+        }
+
         internal class FreeCursorPos : IDisposable
         {
             public Vector2 LastPos { get; }
@@ -50,6 +72,9 @@ namespace QuestoGraph.Utils
                 }
             }
         }
+
+        internal static TempWindowFontScale SetTempWindowFontScale(float scale, float defaultScale = 1f)
+            => new TempWindowFontScale(scale, defaultScale);
 
         internal static IDalamudTextureWrap? GetIcon(uint id)
             => id > 0 ? Plugin.TextureProvider.GetFromGameIcon(new GameIconLookup(id)).GetWrapOrDefault() : null;
@@ -220,6 +245,69 @@ namespace QuestoGraph.Utils
             }
 
             drawList.PathStroke(color, ImDrawFlags.None, thickness);
+        }
+
+        internal static bool Checkbox(string label, bool state)
+        {
+            var temp = state;
+            if (ImGui.Checkbox(label, ref temp))
+            {
+                return temp;
+            }
+
+            return state;
+        }
+
+        internal static bool ToogleImage(bool state, ImTextureID handle, int size, float onOpacity = 1f, float offOpacity = 0.25f)
+            => ToogleImage(state, handle, new Vector2(size, size), onOpacity, offOpacity);
+
+        internal static bool ToogleImage(bool state, ImTextureID handle, Vector2 size, float onOpacity = 1f, float offOpacity = 0.25f)
+        {
+            ImGui.Image(handle, size, Vector2.Zero, Vector2.One, new Vector4(1f, 1f, 1f, state ? onOpacity : offOpacity));
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
+            {
+                state = !state;
+            }
+            return state;
+        }
+
+        internal static T Combobox<T>(string label, T currentValue, T fallbackValue, params T[] items)
+        {
+            if (items.Length < 1)
+            {
+                return currentValue;
+            }
+
+            var selectedIndex = items.IndexOf(currentValue);
+            if (selectedIndex < 0)
+            {
+                selectedIndex = items.IndexOf(fallbackValue);
+                if (selectedIndex < 0)
+                {
+                    selectedIndex = 0;
+                }
+            }
+
+            if (ImGui.BeginCombo(label, items[selectedIndex]?.ToString()))
+            {
+                for (int i = 0; i < items.Length; i++)
+                {
+                    var isSelected = (i == selectedIndex);
+                    if (ImGui.Selectable(items[i]?.ToString(), isSelected))
+                    {
+                        selectedIndex = i;
+                    }
+
+                    if (isSelected)
+                    {
+                        ImGui.SetItemDefaultFocus();
+                    }
+                }
+
+                ImGui.EndCombo();
+            }
+
+            return items[selectedIndex];
         }
     }
 }
