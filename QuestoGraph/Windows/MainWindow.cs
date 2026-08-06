@@ -53,6 +53,16 @@ namespace QuestoGraph.Windows
         {
         }
 
+        public override void OnOpen()
+        {
+            base.OnOpen();
+        }
+
+        public override void OnClose()
+        {
+            base.OnClose();
+        }
+
         public override void Draw()
         {
             ImGuiUtils.DrawPingu();
@@ -83,7 +93,7 @@ namespace QuestoGraph.Windows
                                 using (ImRaii.PushFont(UiBuilder.IconFont))
                                 {
                                     var icon = this.showPinnedQuests ? FontAwesomeIcon.CaretUp : FontAwesomeIcon.CaretDown;
-                                    ImGui.SetCursorPosX(availableSize.X - 32);
+                                    ImGui.SetCursorPosX(availableSize.X - 8);
                                     ImGui.Text(icon.ToIconString());
                                 }
                             }
@@ -564,7 +574,7 @@ namespace QuestoGraph.Windows
             var translatedNames = string.Empty;
             foreach (var lang in Enum.GetValues<ClientLanguage>())
             {
-                translatedNames += questData.GetLocalizedQuestData(lang).Name + "\n";
+                translatedNames += questData.GetLocalizedQuestData(lang)?.Name + "\n";
             }
 
             using (ImGuiUtils.SetTempWindowFontScale(0.75f))
