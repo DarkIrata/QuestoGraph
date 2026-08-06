@@ -78,10 +78,10 @@ namespace QuestoGraph.Data
 
         internal void AppendNextQuests(IEnumerable<uint> nextQuests)
         {
-            this.QuestDataEn.AppendNextQuests(nextQuests);
-            this.QuestDataDe.AppendNextQuests(nextQuests);
-            this.QuestDataFr.AppendNextQuests(nextQuests);
-            this.QuestDataJp.AppendNextQuests(nextQuests);
+            this.QuestDataEn?.AppendNextQuests(nextQuests);
+            this.QuestDataDe?.AppendNextQuests(nextQuests);
+            this.QuestDataFr?.AppendNextQuests(nextQuests);
+            this.QuestDataJp?.AppendNextQuests(nextQuests);
         }
 
         //internal bool ContainsName(string name, StringComparison comparer, ClientLanguage language)
