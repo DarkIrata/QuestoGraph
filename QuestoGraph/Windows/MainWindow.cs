@@ -164,16 +164,25 @@ namespace QuestoGraph.Windows
             ImGui.SameLine();
 
             using (ImRaii.PushFont(UiBuilder.IconFont))
-            using (ImGuiUtils.SetTempWindowFontScale(0.75f))
+            using (ImGuiUtils.SetTempWindowFontScale(0.85f))
+            using (var color = new ImRaii.ColorDisposable())
             using (var freePos = new ImGuiUtils.FreeCursorPos(CursorReset.None))
             {
+
+                if (this.questsManager.SearchFilter.UseAdvancedFilter)
+                {
+                    const uint baseColor = 0x00008011u;
+                    color.Push(ImGuiCol.Button, 0xFF000000 | baseColor);
+                    color.Push(ImGuiCol.ButtonHovered, 0xAA000000 | baseColor);
+                }
+
                 freePos.SetY(freePos.LastPos.Y);
                 freePos.SetX(freePos.LastPos.X - (spacing * 2));
-                //var icon = this.questsManager.SearchFilter.UseAdvancedFilter ? FontAwesomeIcon.CaretUp : FontAwesomeIcon.CaretDown;
-                var icon = this.questsManager.SearchFilter.UseAdvancedFilter ? FontAwesomeIcon.Filter : FontAwesomeIcon.FilterCircleXmark;
+                var icon = this.questsManager.SearchFilter.UseAdvancedFilter ? FontAwesomeIcon.FilterCircleXmark : FontAwesomeIcon.Filter;
                 if (ImGui.Button($"{icon.ToIconString()}##MoreFilterOptions", new Vector2(buttonSize, buttonSize)))
                 {
                     this.questsManager.SearchFilter.UseAdvancedFilter = !this.questsManager.SearchFilter.UseAdvancedFilter;
+                    this.questsManager.RefreshList();
                 }
             }
             ImGuiUtils.Tooltip("Advanced filter options");
@@ -183,7 +192,7 @@ namespace QuestoGraph.Windows
                 //using (ImRaii.PushFont(UiBuilder.IconFont))
                 using (ImGuiUtils.SetTempWindowFontScale(0.875f))
                 {
-                    ImGui.Text("Search Language");
+                    ImGui.Text("Search Language & Filter");
                 }
                 //ImGui.Text($"{FontAwesomeIcon.Language.ToIconString()}");
 
