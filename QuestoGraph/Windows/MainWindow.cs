@@ -24,6 +24,7 @@ namespace QuestoGraph.Windows
         private readonly EventAggregator eventAggregator;
 
         private string filter = string.Empty;
+        private bool showPinnedQuests = true;
         private QuestData? selectedQuestData = null;
 
         public MainWindow(Config config, QuestsManager questsManager, UIManager uiManager, EventAggregator eventAggregator)
@@ -68,32 +69,62 @@ namespace QuestoGraph.Windows
                     ImGui.Separator();
 
                     availableSize = ImGui.GetContentRegionAvail();
+                    var isSelected = false;
+                    using (var pinnedGroup = ImRaii.Group())
+                    {
+                        if (this.questsManager.CurrentState == QuestsManager.State.Initialized &&
+                            this.config.QuestList.PinnedQuests.Count > 0)
+                        {
+                            using (ImGuiUtils.SetTempWindowFontScale(0.90f))
+                            {
+                                ImGui.Text($"Pinned quests ({this.config.QuestList.PinnedQuests.Count})");
+                                ImGui.SameLine();
+
+                                using (ImRaii.PushFont(UiBuilder.IconFont))
+                                {
+                                    var icon = this.showPinnedQuests ? FontAwesomeIcon.CaretUp : FontAwesomeIcon.CaretDown;
+                                    ImGui.SetCursorPosX(availableSize.X - 32);
+                                    ImGui.Text(icon.ToIconString());
+                                }
+                            }
+
+                            if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
+                            {
+                                this.showPinnedQuests = !this.showPinnedQuests;
+                            }
+
+                            if (this.showPinnedQuests)
+                            {
+                                var height = this.config.QuestList.PinnedQuests.Count * 22;
+                                height = height > 120 ? 120 : height;
+                                using (var pinnedChild = ImRaii.Child("##pinnedQuestsArea", new Vector2(availableSize.X, height), false, ImGuiWindowFlags.HorizontalScrollbar))
+                                {
+                                    if (pinnedChild.Success)
+                                    {
+                                        foreach (var pinnedQuestId in this.config.QuestList.PinnedQuests)
+                                        {
+                                            var questData = this.questsManager.QuestData[pinnedQuestId];
+                                            isSelected = this.selectedQuestData == questData;
+                                            if (ImGuiUtils.SelectableQuest(this.config.Colors, questData, null, ref isSelected))
+                                            {
+                                                this.selectedQuestData = questData;
+                                                isSelected = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            ImGui.Separator();
+                        }
+                    }
+
+                    availableSize = ImGui.GetContentRegionAvail();
                     using (var child = ImRaii.Child("##Quests", new Vector2(availableSize.X, availableSize.Y - 31), false, ImGuiWindowFlags.HorizontalScrollbar))
                     {
                         if (child.Success)
                         {
                             if (this.questsManager.CurrentState == QuestsManager.State.Initialized)
                             {
-                                var isSelected = false;
-                                if (this.config.QuestList.PinnedQuests.Count > 0)
-                                {
-                                    using (ImGuiUtils.SetTempWindowFontScale(0.90f))
-                                    {
-                                        ImGui.Text($"Pinned quests ({this.config.QuestList.PinnedQuests.Count})");
-                                    }
-                                    foreach (var pinnedQuestId in this.config.QuestList.PinnedQuests)
-                                    {
-                                        var questData = this.questsManager.QuestData[pinnedQuestId];
-                                        isSelected = this.selectedQuestData == questData;
-                                        if (ImGuiUtils.SelectableQuest(this.config.Colors, questData, null, ref isSelected))
-                                        {
-                                            this.selectedQuestData = questData;
-                                            isSelected = true;
-                                        }
-                                    }
-                                    ImGui.Separator();
-                                }
-
                                 foreach (var questData in this.questsManager.GetFilteredList(this.filter))
                                 {
                                     isSelected = this.selectedQuestData == questData;
