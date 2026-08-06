@@ -98,10 +98,21 @@ namespace QuestoGraph.Manager
 
         public void ToggleGraph() => this.graphWindow.Toggle();
 
-        public void ShowGraph(QuestData questData) => this.graphWindow.Show(questData);
+        public void ShowGraph(QuestData questData)
+        {
+            if (!this.graphWindow.IsOpen)
+            {
+                this.graphWindow.Toggle();
+            }
+            this.graphWindow.Show(questData);
+        }
 
         internal void RedrawGraph()
         {
+            if (!this.graphWindow.IsOpen)
+            {
+                this.graphWindow.Toggle();
+            }
             this.graphWindow.RedrawGraph();
         }
     }
